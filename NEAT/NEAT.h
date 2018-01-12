@@ -6,18 +6,20 @@
 #define NEAT_API __declspec(dllimport)
 #endif
 
-class NEAT_API NEAT_t {
-public:
-    NEAT_t();
-    //virtual ~NEAT_t() = 0;
+namespace NEAT {
+	class NEAT_API NEAT_t {
+	public:
+		NEAT_t();
+		//virtual ~NEAT_t() = 0;
 
-    void nextGeneration();
+		void nextGeneration();
 
 
-protected:
-    //virtual NEATPopulation_t InitializePopulation() = 0;
+	protected:
+		//virtual NEATPopulation_t InitializePopulation() = 0;
 
-private:
-    //NEATPopulation_t m_population;
-    int m_generation;
-};
+	private:
+		//NEATPopulation_t m_population;
+		int m_generation;
+	};
+}

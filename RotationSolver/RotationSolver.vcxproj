@@ -22,6 +22,7 @@
     <ProjectGuid>{7F848388-E140-4F74-AE95-A249B9C16D2C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>RDM_NESTRotation_Main</RootNamespace>
+	<VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
     <ProjectName>RotationSolver</ProjectName>
   </PropertyGroup>

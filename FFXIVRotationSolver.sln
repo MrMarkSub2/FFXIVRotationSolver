@@ -13,6 +13,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NEAT", "NEAT\NEAT.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NEATUnitTests", "NEATUnitTests\NEATUnitTests.vcxproj", "{407A0A7C-9D31-4DEB-9B4D-CCBF9F5EBC76}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4840ACCC-EE0E-44F1-AD02-60D2B8838D50}"
+	ProjectSection(SolutionItems) = preProject
+		test64.runsettings = test64.runsettings
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

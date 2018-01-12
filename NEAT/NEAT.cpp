@@ -6,11 +6,11 @@ namespace {
     //double g_select_rate = 
 }
 
-NEAT_t::NEAT_t()
+NEAT::NEAT_t::NEAT_t()
     :m_generation(0)//, m_population(g_population_size)
 { }
 
-void NEAT_t::nextGeneration()
+void NEAT::NEAT_t::nextGeneration()
 {
     //NEATPopulation_t ngPopulation = m_population.selectBest();
 

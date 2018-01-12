@@ -22,6 +22,7 @@
     <ProjectGuid>{4134E030-905E-4092-9324-21B4D1343489}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>NEST</RootNamespace>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -149,6 +150,7 @@
     <ClInclude Include="EvolutionaryAlgorithm.h" />
     <ClInclude Include="GEPDecisionTree.h" />
     <ClInclude Include="NEAT.h" />
+    <ClInclude Include="NEATGenome.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -169,6 +171,7 @@
     </ClCompile>
     <ClCompile Include="EvolutionaryAlgorithm.cpp" />
     <ClCompile Include="NEAT.cpp" />
+    <ClCompile Include="NEATGenome.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
