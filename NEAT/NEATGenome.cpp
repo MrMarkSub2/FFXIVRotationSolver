@@ -7,15 +7,16 @@ struct NEAT::Population_t::Impl {
 	std::map<int, Species_t> m_species;
 };
 
-NEAT::Population_t::Population_t()
-	: pimpl(new Impl())
+NEAT::Population_t::Population_t() : pimpl(new Impl()) { }
+NEAT::Population_t::Population_t(const Population_t & p) : pimpl(new Impl(*p.pimpl)) { }
+NEAT::Population_t & NEAT::Population_t::operator=(const NEAT::Population_t & p)
 {
-}
+	if (this != &p)
+		pimpl = new Impl(*p.pimpl);
 
-NEAT::Population_t::~Population_t()
-{
-	delete pimpl;
+	return *this;
 }
+NEAT::Population_t::~Population_t() { delete pimpl; }
 
 void NEAT::Population_t::addToCorrectSpecies(const Genome_t & genome)
 {
@@ -26,15 +27,16 @@ struct NEAT::Species_t::Impl {
 	std::map<int, NEAT::Genome_t> m_genomes;
 };
 
-NEAT::Species_t::Species_t()
-	: pimpl(new Impl())
+NEAT::Species_t::Species_t() : pimpl(new Impl()) { }
+NEAT::Species_t::Species_t(const NEAT::Species_t & s) : pimpl(new Impl(*s.pimpl)) { }
+NEAT::Species_t & NEAT::Species_t::operator=(const NEAT::Species_t & s)
 {
-}
+	if (this != &s)
+		pimpl = new Impl(*s.pimpl);
 
-NEAT::Species_t::~Species_t()
-{
-	delete pimpl;
+	return *this;
 }
+NEAT::Species_t::~Species_t() { delete pimpl; }
 
 struct NEAT::Genome_t::Impl {
 	// don't use shared_ptr, we want our own copies to modify values
@@ -48,11 +50,15 @@ NEAT::Genome_t::Genome_t()
 	// generate all standardized node genes
 	// use enum values so that I can always figure out what node maps to what
 }
-
-NEAT::Genome_t::~Genome_t()
+NEAT::Genome_t::Genome_t(const NEAT::Genome_t & g) : pimpl(new Impl(*g.pimpl)) { }
+NEAT::Genome_t & NEAT::Genome_t::operator=(const NEAT::Genome_t & g)
 {
-	delete pimpl;
+	if (this != &g)
+		pimpl = new Impl(*g.pimpl);
+
+	return *this;
 }
+NEAT::Genome_t::~Genome_t() { delete pimpl; }
 
 void NEAT::Genome_t::addNodeGene(int num, NODETYPE nodetype, const std::string & label)
 {
@@ -78,15 +84,30 @@ NEAT::NodeGene_t::Impl::Impl(int index, NODETYPE nodetype, const std::string& la
 {
 }
 
-NEAT::NodeGene_t::NodeGene_t(int index, NODETYPE nodetype, const std::string & label)
-	: pimpl(new Impl(index, nodetype, label))
+NEAT::NodeGene_t::NodeGene_t(int index, NODETYPE nodetype, const std::string & label) : pimpl(new Impl(index, nodetype, label)) { }
+NEAT::NodeGene_t::NodeGene_t(const NEAT::NodeGene_t & ng) : pimpl(new Impl(*ng.pimpl)) { }
+NEAT::NodeGene_t & NEAT::NodeGene_t::operator=(const NEAT::NodeGene_t & ng)
 {
-	throw;
+	if (this != &ng)
+		pimpl = new Impl(*ng.pimpl);
+
+	return *this;
+}
+NEAT::NodeGene_t::~NodeGene_t() { delete pimpl; }
+
+std::string NEAT::NodeGene_t::getLabel() const
+{
+	return pimpl->m_label;
 }
 
-NEAT::NodeGene_t::~NodeGene_t()
+double NEAT::NodeGene_t::getValue() const
 {
-	delete pimpl;
+	return pimpl->m_value;
+}
+
+void NEAT::NodeGene_t::setValue(double val)
+{
+	pimpl->m_value = val;
 }
 
 NEAT::ConnectionGene_t::ConnectionGene_t(int in, int out, double weight)

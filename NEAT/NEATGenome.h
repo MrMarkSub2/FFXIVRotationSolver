@@ -46,7 +46,14 @@ namespace NEAT {
 	class NEAT_API NodeGene_t {
 	public:
 		NodeGene_t(int index, NODETYPE nodetype, const std::string& label);
+		NodeGene_t(const NodeGene_t & ng);
+		NodeGene_t& NodeGene_t::operator=(const NodeGene_t& ng);
 		~NodeGene_t();
+
+		std::string getLabel() const;
+		double getValue() const;
+
+		void setValue(double val);
 
 	private:
 		struct Impl;
@@ -56,6 +63,8 @@ namespace NEAT {
 	class NEAT_API Genome_t {
 	public:
 		Genome_t();
+		Genome_t(const Genome_t & g);
+		Genome_t& Genome_t::operator=(const Genome_t& g);
 		~Genome_t();
 
 		void addNodeGene(int num, NODETYPE nodetype, const std::string& label);
@@ -69,6 +78,8 @@ namespace NEAT {
 	class NEAT_API Species_t {
 	public:
 		Species_t();
+		Species_t(const Species_t & s);
+		Species_t& Species_t::operator=(const Species_t& s);
 		~Species_t();
 
 	private:
@@ -79,6 +90,8 @@ namespace NEAT {
 	class NEAT_API Population_t {
 	public:
 		Population_t();
+		Population_t(const Population_t & p);
+		Population_t& Population_t::operator=(const Population_t& p);
 		~Population_t();
 
 		void addToCorrectSpecies(const Genome_t& genome);
