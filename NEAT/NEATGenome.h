@@ -56,9 +56,6 @@ namespace NEAT {
 		~NodeGene_t();
 
 		std::string getLabel() const;
-		double getValue() const;
-
-		void setValue(double val);
 
 	private:
 		struct Impl;

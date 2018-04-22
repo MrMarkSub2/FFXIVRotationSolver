@@ -500,11 +500,10 @@ struct NEAT::NodeGene_t::Impl {
 	int m_index;
 	NODETYPE m_nodetype;
 	std::string m_label;
-	double m_value;
 };
 
 NEAT::NodeGene_t::Impl::Impl(int index, NODETYPE nodetype, const std::string& label)
-	: m_index(index), m_nodetype(nodetype), m_label(label), m_value(0.0)
+	: m_index(index), m_nodetype(nodetype), m_label(label)
 {
 }
 
@@ -522,17 +521,6 @@ NEAT::NodeGene_t::~NodeGene_t() { delete pimpl; }
 std::string NEAT::NodeGene_t::getLabel() const
 {
 	return pimpl->m_label;
-}
-
-//TODO: Since the genome handles values and hidden nodes and such, i might not need this at all
-double NEAT::NodeGene_t::getValue() const
-{
-	return pimpl->m_value;
-}
-
-void NEAT::NodeGene_t::setValue(double val)
-{
-	pimpl->m_value = val;
 }
 
 NEAT::ConnectionGene_t::ConnectionGene_t(int in, int out, double weight)

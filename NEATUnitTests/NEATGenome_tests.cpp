@@ -271,8 +271,6 @@ namespace NEATUnitTests
 		TEST_METHOD(NodeGeneTestIGuess)
 		{
 			NEAT::NodeGene_t ng1(5, NEAT::INPUT_NODE, "Test gene");
-			ng1.setValue(4.2);
-			Assert::AreEqual(4.2, ng1.getValue());
 			Assert::AreEqual(std::string("Test gene"), ng1.getLabel());
 		}
 
