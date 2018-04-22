@@ -1,12 +1,22 @@
 #include "stdafx.h"
 #include "NEATGenome.h"
+#include <chrono>
 #include <list>
+#include <random>
 
 int NEAT::ConnectionGene_t::g_nextInnovationNumber = 0;
 
+//TODO: all of these constants are from the NEAT paper, credit it
 const double NEAT::Genome_t::delta_c1 = 1.0;
 const double NEAT::Genome_t::delta_c2 = 1.0;
 const double NEAT::Genome_t::delta_c3 = 0.4;
+
+const double NEAT::Genome_t::mutate_without_crossover_rate = 0.25;
+const double NEAT::Genome_t::disable_gene_rate = 0.75;
+const double NEAT::Genome_t::mutate_all_connection_weights = 0.8;
+const double NEAT::Genome_t::generate_new_connection_weight = 0.1;
+const double NEAT::Genome_t::mutate_add_connection = 0.05;
+const double NEAT::Genome_t::mutate_add_node = 0.03;
 
 namespace {
 	double randDouble(double min = 0.0, double max = 1.0) {
@@ -18,10 +28,19 @@ namespace {
 	}
 
 	std::map<std::pair<int, int>, NEAT::ConnectionGene_t> g_all_connections;
+
+	// gaussian distribution, mean = 0.0, stdev = 1.0
+	double getNormalizedRand(double mean = 0.0, double stdev = 1.0) {
+		static unsigned seed((unsigned)std::chrono::system_clock::now().time_since_epoch().count());
+		static std::default_random_engine generator(seed);
+
+		std::normal_distribution<double> distribution(mean, stdev);
+		return distribution(generator);
+	}
 }
 
 struct NEAT::Population_t::Impl {
-	std::map<int, Species_t> m_species;
+	//std::map<int, Species_t> m_species;
 };
 
 NEAT::Population_t::Population_t() : pimpl(new Impl()) { }
@@ -35,31 +54,36 @@ NEAT::Population_t & NEAT::Population_t::operator=(const NEAT::Population_t & p)
 }
 NEAT::Population_t::~Population_t() { delete pimpl; }
 
-void NEAT::Population_t::addToCorrectSpecies(const Genome_t & genome)
-{
-	throw;
-}
+//void NEAT::Population_t::addToCorrectSpecies(const Genome_t & genome)
+//{
+//	throw;
+//}
 
-struct NEAT::Species_t::Impl {
-	std::map<int, NEAT::Genome_t> m_genomes;
-};
-
-NEAT::Species_t::Species_t() : pimpl(new Impl()) { }
-NEAT::Species_t::Species_t(const NEAT::Species_t & s) : pimpl(new Impl(*s.pimpl)) { }
-NEAT::Species_t & NEAT::Species_t::operator=(const NEAT::Species_t & s)
-{
-	if (this != &s)
-		pimpl = new Impl(*s.pimpl);
-
-	return *this;
-}
-NEAT::Species_t::~Species_t() { delete pimpl; }
+//struct NEAT::Species_t::Impl {
+//	std::map<int, NEAT::Genome_t> m_genomes;
+//};
+//
+//NEAT::Species_t::Species_t() : pimpl(new Impl()) { }
+//NEAT::Species_t::Species_t(const NEAT::Species_t & s) : pimpl(new Impl(*s.pimpl)) { }
+//NEAT::Species_t & NEAT::Species_t::operator=(const NEAT::Species_t & s)
+//{
+//	if (this != &s)
+//		pimpl = new Impl(*s.pimpl);
+//
+//	return *this;
+//}
+//NEAT::Species_t::~Species_t() { delete pimpl; }
 
 struct NEAT::Genome_t::Impl {
-	Impl() : m_next_node_gene(0), m_max_innovation_mutation(0) {}
+	Impl() : m_next_node_gene(0), m_max_innovation_mutation(0), m_fitness(0.0), m_adjusted_fitness(0.0) { }
 
 	bool checkIfRecurrentConnection(int innoNum);
 	SparseMatrix_t<double> W_helper(int min_size, bool recurrent);
+
+	// crossover/mutate helpers
+	void mutateAllConnectionWeights();
+	std::pair<int, int> findNewAddConnection();
+	NEAT::ConnectionGene_t findConnectionAddNewNode();
 
 	// don't use shared_ptr, we want our own copies to modify values
 	std::map<int, NodeGene_t> m_node_genes;
@@ -67,6 +91,9 @@ struct NEAT::Genome_t::Impl {
 
 	std::map<int, ConnectionGene_t> m_connection_genes;
 	int m_max_innovation_mutation;
+
+	double m_fitness;
+	double m_adjusted_fitness;
 };
 
 bool NEAT::Genome_t::Impl::checkIfRecurrentConnection(int innoNum)
@@ -114,6 +141,88 @@ SparseMatrix_t<double> NEAT::Genome_t::Impl::W_helper(int min_size, bool recurre
 	}
 
 	return rval.fullyExpand();
+}
+
+void NEAT::Genome_t::Impl::mutateAllConnectionWeights()
+{
+	for (std::map<int, ConnectionGene_t>::iterator it = m_connection_genes.begin(); it != m_connection_genes.end(); ++it) {
+		if (randDouble() < Genome_t::generate_new_connection_weight) {
+			// SET to new normalized random number
+			it->second.setWeight(getNormalizedRand());
+		}
+		else {
+			// MODIFY by normalized random number
+			it->second.setWeight(it->second.getWeight() + getNormalizedRand());
+		}
+	}
+}
+
+std::pair<int, int> NEAT::Genome_t::Impl::findNewAddConnection()
+{
+	// get all node keys
+	std::vector<int> node_keys;
+	for (std::map<int, NodeGene_t>::const_iterator it = m_node_genes.begin(); it != m_node_genes.end(); ++it) {
+		node_keys.push_back(it->first);
+	}
+	int num_node_keys = (int)node_keys.size();
+
+	if (m_connection_genes.size() == num_node_keys * num_node_keys) {
+		// jeez... we're fully connected, that's crazy
+		return std::make_pair(-1, -1);
+	}
+	else if (m_connection_genes.size() >= num_node_keys * num_node_keys * 0.9) {
+		// this seems a bit labor intensive, but I'm quite worried about a highly connected neural network... would I be able to find that 1 in 
+		// 10,000 missing connection? And I don't want to just abort in that event...
+		std::set<std::pair<int, int>> connections_not_made_yet;
+		for (int i = 0; i < num_node_keys; ++i) {
+			for (int j = 0; j < num_node_keys; ++j) {
+				connections_not_made_yet.insert(std::make_pair(node_keys[i], node_keys[j]));
+			}
+		}
+
+		// from that list of all possible connections, now remove all legit connections
+		for (std::map<int, ConnectionGene_t>::const_iterator it = m_connection_genes.begin(); it != m_connection_genes.end(); ++it) {
+			std::pair<int, int> actual_connection(it->second.getInIndex(), it->second.getOutIndex());
+			connections_not_made_yet.erase(actual_connection);
+		}
+
+		// NOW, we choose a random connection that we're guaranteed to create for the first time
+		std::set<std::pair<int, int>>::const_iterator chosen_connection_it = connections_not_made_yet.begin();
+		//TODO: O(n^2) for n = number of nodes...
+		std::advance(chosen_connection_it, randInt(0, (int)connections_not_made_yet.size() - 1));
+
+		return *chosen_connection_it;
+	}
+	else {
+		// connectivity is low enough that I'm comfortable with guess-n-check
+		int inNum, outNum;
+		bool valid = false;
+		do {
+			inNum = node_keys[randInt(0, num_node_keys - 1)];
+			outNum = node_keys[randInt(0, num_node_keys - 1)];
+
+			std::map<std::pair<int, int>, ConnectionGene_t>::iterator all_it = g_all_connections.find(std::make_pair(inNum, outNum));
+			if (all_it != g_all_connections.end()) {
+				int innovationNum = all_it->second.getInnovationNumber();
+				std::map<int, ConnectionGene_t>::iterator this_it = m_connection_genes.find(innovationNum);
+				if (this_it != m_connection_genes.end()) {
+					valid = true;
+				}
+			}
+		} while (!valid);
+
+		// hopefully that didn't take too long...
+		return std::make_pair(inNum, outNum);
+	}
+}
+
+NEAT::ConnectionGene_t NEAT::Genome_t::Impl::findConnectionAddNewNode()
+{
+	// select a random existing connection
+	std::map<int, ConnectionGene_t>::iterator it = m_connection_genes.begin();
+	std::advance(it, randInt(0, (int)m_connection_genes.size() - 1));
+	it->second.disable();
+	return it->second;
 }
 
 NEAT::Genome_t::Genome_t()
@@ -238,14 +347,128 @@ void NEAT::Genome_t::calculateDisjointExcess(const Genome_t & rhs, std::set<int>
 	}
 }
 
-SparseMatrix_t<double> NEAT::Genome_t::Wxh(int min_size)
+SparseMatrix_t<double> NEAT::Genome_t::Wxh(int min_size) const
 {
 	return pimpl->W_helper(min_size, false);
 }
 
-SparseMatrix_t<double> NEAT::Genome_t::Whh(int min_size)
+SparseMatrix_t<double> NEAT::Genome_t::Whh(int min_size) const
 {
 	return pimpl->W_helper(min_size, true);
+}
+
+double NEAT::Genome_t::getFitness() const
+{
+	return pimpl->m_fitness;
+}
+
+void NEAT::Genome_t::setFitness(double fitness)
+{
+	pimpl->m_fitness = fitness;
+}
+
+double NEAT::Genome_t::getAdjustedFitness() const
+{
+	return pimpl->m_adjusted_fitness;
+}
+
+void NEAT::Genome_t::setAdjustedFitness(double adjusted_fitness)
+{
+	pimpl->m_adjusted_fitness = adjusted_fitness;
+}
+
+NEAT::Genome_t NEAT::Genome_t::makeOffspring(const Genome_t & rhs) const
+{
+	Genome_t rval;
+
+	if (randDouble() < Genome_t::mutate_without_crossover_rate)
+		rval = *this;
+	else {
+		// perform crossover first
+		rval = crossover(rhs);
+	}
+
+	rval.mutate();
+
+	// these need to be recalculated, zero them out
+	rval.setFitness(0.0);
+	rval.setAdjustedFitness(0.0);
+
+	return rval;
+}
+
+NEAT::Genome_t NEAT::Genome_t::crossover(const Genome_t & rhs) const
+{
+	// *this should always be the more fit parent
+	if (rhs.getFitness() > getFitness())
+		return rhs.crossover(*this);
+
+	// this copies over all the nodes, matching genes, excess genes, and disjoint genes from the more fit parent! Wow!
+	Genome_t rval(*this); 
+
+	std::set<int> match, disjoint_lhs, disjoint_rhs, excess_lhs, excess_rhs;
+	rval.calculateDisjointExcess(rhs, match, disjoint_lhs, disjoint_rhs, excess_lhs, excess_rhs);
+
+	for (std::map<int, ConnectionGene_t>::iterator lhs_it = rval.pimpl->m_connection_genes.begin(); lhs_it != rval.pimpl->m_connection_genes.end(); ++lhs_it) {
+		if (match.find(lhs_it->first) != match.end()) {
+			// matching gene, select weight randomly
+			std::map<int, ConnectionGene_t>::const_iterator rhs_it = rhs.pimpl->m_connection_genes.find(lhs_it->first);
+
+			if (randInt(0, 1) == 1) // flip a coin
+				lhs_it->second.setWeight(rhs_it->second.getWeight());
+			// else keep the lhs's weight
+
+			// if EITHER were disabled, chance the child will be disabled too
+			if (!lhs_it->second.isEnabled() || !rhs_it->second.isEnabled()) {
+				if (randDouble() < Genome_t::disable_gene_rate) {
+					lhs_it->second.disable();
+				}
+				else {
+					lhs_it->second.enable();
+				}
+			}
+		}
+		else {
+			// either disjoint_lhs or excess_lhs
+			// weight is fine as is
+			// if this parent was disabled, chance the child will be disabled too
+			if (!lhs_it->second.isEnabled()) {
+				if (randDouble() < Genome_t::disable_gene_rate) {
+					lhs_it->second.disable();
+				}
+				else {
+					lhs_it->second.enable();
+				}
+			}
+		}
+	}
+
+	// values crossed over, disjoint & excess all from parent. We're done!
+	return rval;
+}
+
+void NEAT::Genome_t::mutate()
+{
+	// should we modify the connection weights?
+	if (randDouble() < Genome_t::mutate_all_connection_weights) {
+		pimpl->mutateAllConnectionWeights();
+	}
+
+	// should we add a brand new connection?
+	if (randDouble() < Genome_t::mutate_add_connection) {
+		std::pair<int, int> newConnectionPair = pimpl->findNewAddConnection();
+		addConnectionGene(newConnectionPair.first, newConnectionPair.second, getNormalizedRand());
+	}
+
+	// should we add a brand new node?
+	if (randDouble() < Genome_t::mutate_add_node) {
+		int newNodeIndex = addNodeGene(NEAT::HIDDEN_NODE, "Hidden");
+		if (newNodeIndex != -1) { // no errors
+			NEAT::ConnectionGene_t oldConnectionCopy = pimpl->findConnectionAddNewNode();
+			addConnectionGene(oldConnectionCopy.getInIndex(), newNodeIndex, 1.0);
+			addConnectionGene(newNodeIndex, oldConnectionCopy.getOutIndex(), oldConnectionCopy.getWeight());
+		}
+	}
 }
 
 /*NEAT::Genome_t NEAT::Genome_t::createMutation()
@@ -301,6 +524,7 @@ std::string NEAT::NodeGene_t::getLabel() const
 	return pimpl->m_label;
 }
 
+//TODO: Since the genome handles values and hidden nodes and such, i might not need this at all
 double NEAT::NodeGene_t::getValue() const
 {
 	return pimpl->m_value;

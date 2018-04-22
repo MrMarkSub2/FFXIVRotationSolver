@@ -34,12 +34,25 @@ namespace NEATUnitTests
 		return rval.str();
 	}
 
-	void AssertIsEssentuallyEqual(double answer, double val, std::wstring err) {
+	std::wstring doublesEqualErr(double val, double answer, std::wstring err) {
+		std::wstringstream rval;
+		rval << "Did not expect to match " << val;
+		if (!err.empty())
+			rval << " -- " << err;
+		rval << std::endl;
+		return rval.str();
+	}
+
+	void AssertIsEssentiallyEqual(double answer, double val, std::wstring err) {
 		Assert::IsTrue(NEAT::IsEssentiallyEqual(answer, val), doublesNotEqualErr(answer, val, err).c_str());
 	}
 
-	void AssertIsEssentuallyEqual(double answer, double val) {
+	void AssertIsEssentiallyEqual(double answer, double val) {
 		Assert::IsTrue(NEAT::IsEssentiallyEqual(answer, val), doublesNotEqualErr(answer, val, L"").c_str());
+	}
+
+	void AssertIsNotEssentiallyEqual(double answer, double val, std::wstring err) {
+		Assert::IsFalse(NEAT::IsEssentiallyEqual(answer, val), doublesEqualErr(answer, val, err).c_str());
 	}
 
 	TEST_CLASS(PopulationTests)
@@ -137,6 +150,42 @@ namespace NEATUnitTests
 			Assert::AreEqual(mymismatch_lhs, mismatch_rhs, L"rhs mismatch mismatch");
 		}
 
+		TEST_METHOD(OffspringTest) {
+			NEAT::Genome_t g1;
+			Assert::AreEqual(0, g1.addNodeGene(NEAT::INPUT_NODE, "In #1"), L"In #1");
+			Assert::AreEqual(1, g1.addNodeGene(NEAT::INPUT_NODE, "In #2"), L"In #2");
+			Assert::AreEqual(2, g1.addNodeGene(NEAT::INPUT_NODE, "In #3"), L"In #3");
+			Assert::AreEqual(3, g1.addNodeGene(NEAT::OUTPUT_NODE, "Out #1"), L"Out #1");
+			Assert::AreEqual(4, g1.addNodeGene(NEAT::HIDDEN_NODE, "Hidden #1"), L"Hidden #1");
+
+			g1.addConnectionGene(0, 3, 0.7);
+			g1.addConnectionGene(1, 3, 0.5);
+			g1.addConnectionGene(2, 3, 0.5);
+			g1.addConnectionGene(1, 4, 0.2);
+			g1.addConnectionGene(4, 3, 0.4);
+
+			NEAT::Genome_t g2(g1);
+			Assert::AreEqual(5, g2.addNodeGene(NEAT::HIDDEN_NODE, "Hidden #2"), L"Hidden #2");
+			Assert::IsTrue(g2.updateConnectionGene(0, 3, 0.8));
+			Assert::IsTrue(g2.updateConnectionGene(1, 3, 0.3));
+			Assert::IsTrue(g2.updateConnectionGene(2, 3, 0.8));
+			Assert::IsTrue(g2.updateConnectionGene(1, 4, 0.6));
+			Assert::IsTrue(g2.updateConnectionGene(4, 3, 0.9));
+
+			g2.addConnectionGene(4, 5, 0.1);
+			g2.addConnectionGene(5, 3, 0.2);
+			g1.addConnectionGene(0, 4, 0.3);
+			g2.addConnectionGene(2, 4, 0.4);
+			g2.addConnectionGene(0, 5, 0.5);
+
+			AssertIsEssentiallyEqual(304.0 / 450.0, g1.delta(g2), L"g1.delta(g2)");
+			AssertIsEssentiallyEqual(304.0 / 450.0, g2.delta(g1), L"g2.delta(g1)");
+
+			NEAT::Genome_t g3(g1.makeOffspring(g2));
+			AssertIsNotEssentiallyEqual(304.0 / 450.0, g3.delta(g1), L"g3.delta(g1)");
+			AssertIsNotEssentiallyEqual(304.0 / 450.0, g3.delta(g2), L"g3.delta(g2)");
+		}
+
 		TEST_METHOD(DeltaTest) {
 			NEAT::Genome_t g1;
 			Assert::AreEqual(0, g1.addNodeGene(NEAT::INPUT_NODE, "In #1"), L"In #1");
@@ -165,9 +214,10 @@ namespace NEATUnitTests
 			g2.addConnectionGene(2, 4, 0.4);
 			g2.addConnectionGene(0, 5, 0.5);
 
-			AssertIsEssentuallyEqual(304.0 / 450.0, g1.delta(g2), L"g1.delta(g2)");
-			AssertIsEssentuallyEqual(304.0 / 450.0, g2.delta(g1), L"g2.delta(g1)");
+			AssertIsEssentiallyEqual(304.0 / 450.0, g1.delta(g2), L"g1.delta(g2)");
+			AssertIsEssentiallyEqual(304.0 / 450.0, g2.delta(g1), L"g2.delta(g1)");
 		}
+
 
 		TEST_METHOD(WxhTest) {
 			NEAT::Genome_t g;
@@ -192,11 +242,11 @@ namespace NEATUnitTests
 				Assert::Fail(L"s0 multiplication failed!");
 			}
 
-			AssertIsEssentuallyEqual(0.0, s0[0]);
-			AssertIsEssentuallyEqual(0.0, s0[1]);
-			AssertIsEssentuallyEqual(0.0, s0[2]);
-			AssertIsEssentuallyEqual(1.52, s0[3]);
-			AssertIsEssentuallyEqual(0.8, s0[4]);
+			AssertIsEssentiallyEqual(0.0, s0[0]);
+			AssertIsEssentiallyEqual(0.0, s0[1]);
+			AssertIsEssentiallyEqual(0.0, s0[2]);
+			AssertIsEssentiallyEqual(1.52, s0[3]);
+			AssertIsEssentiallyEqual(0.8, s0[4]);
 
 			std::vector<double> s1;
 			try {
@@ -206,11 +256,11 @@ namespace NEATUnitTests
 				Assert::Fail(L"s1 multiplication failed!");
 			}
 
-			AssertIsEssentuallyEqual(0.0, s1[0]);
-			AssertIsEssentuallyEqual(0.0, s1[1]);
-			AssertIsEssentuallyEqual(0.0, s1[2]);
-			AssertIsEssentuallyEqual(1.52, s1[3]);
-			AssertIsEssentuallyEqual(1.712, s1[4]);
+			AssertIsEssentiallyEqual(0.0, s1[0]);
+			AssertIsEssentiallyEqual(0.0, s1[1]);
+			AssertIsEssentiallyEqual(0.0, s1[2]);
+			AssertIsEssentiallyEqual(1.52, s1[3]);
+			AssertIsEssentiallyEqual(1.712, s1[4]);
 		}
 	};
 
