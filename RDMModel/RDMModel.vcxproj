@@ -22,7 +22,7 @@
     <ProjectGuid>{FD43BB5B-214F-45EA-9E22-4E1578311E2F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>RDM_NESTRotation</RootNamespace>
-	<VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
     <ProjectName>RDMModel</ProjectName>
   </PropertyGroup>
@@ -178,6 +178,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="baselines.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
