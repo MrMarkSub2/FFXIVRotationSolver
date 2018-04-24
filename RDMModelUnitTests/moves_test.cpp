@@ -175,14 +175,14 @@ namespace TestCases
             std::shared_ptr<Move_t> end(new EndPlaceholder_t());
 
             opener_ms.advanceAndAddMove(accel);
-            opener_ms.advance(4000);
+            opener_ms.advance(3900);
             opener_ms.advanceAndAddMove(div);
             opener_ms.advance((-5000 * opener_state.m_statics.m_gcd / 25000 * 10) - (-6000)); // butt it right up against start time
             opener_ms.advanceAndAddMove(veraero);
 
-            Assert::AreEqual(10000, opener_ms.constLastState().m_total_duration + veraero->getCast() * opener_state.m_statics.m_gcd / 25000 * 10);
+            Assert::AreEqual(9900, opener_ms.constLastState().m_total_duration + veraero->getCast() * opener_state.m_statics.m_gcd / 25000 * 10);
 
-            MoveStates_t movestates(opener_ms, -10 * 1000);
+            MoveStates_t movestates(opener_ms, -9900);
             movestates.advance(movestates.constLastState().m_caststate.m_casting);
 
             Assert::AreEqual(0, movestates.constLastState().m_total_duration);
@@ -227,12 +227,12 @@ namespace TestCases
             //const State_t& laststateref = opener_ms.constLastState();
 
             opener_ms.advanceAndAddMove(accel);
-            opener_ms.advance(4000);
+            opener_ms.advance(3900);
             opener_ms.advanceAndAddMove(div);
             opener_ms.advance((-5000 * opener_state.m_statics.m_gcd / 25000 * 10) - (-6000)); // butt it right up against start time
             opener_ms.advanceAndAddMove(veraero); // 300 | 0
 
-            Assert::AreEqual(10000, opener_ms.constLastState().m_total_duration + veraero->getCast() * opener_state.m_statics.m_gcd / 25000 * 10);
+            Assert::AreEqual(9900, opener_ms.constLastState().m_total_duration + veraero->getCast() * opener_state.m_statics.m_gcd / 25000 * 10);
 
             opener_ms.advanceAndAddMove(verthunder); // 300 | 2.42
             opener_ms.advanceAndAddMove(infusion); //  | 2.42 no clip
@@ -268,7 +268,7 @@ namespace TestCases
             opener_ms.advanceAndAddMove(verfire); // 290 | 29.73 | EMBOLDEN 1
             opener_ms.advanceAndAddMove(veraero); // 322 | 32.15
             opener_ms.advanceAndAddMove(fleche); // 442 | 32.15 no clip
-            Assert::AreEqual(42150, opener_ms.constLastState().m_total_duration + opener_ms.constLastState().m_caststate.m_gcd, L"running duration is off");
+            Assert::AreEqual(42050, opener_ms.constLastState().m_total_duration + opener_ms.constLastState().m_caststate.m_gcd, L"running duration is off");
             // infusion wears off AFTER fleche
             // embolden wears off AFTER embolden
 
