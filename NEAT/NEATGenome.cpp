@@ -317,7 +317,7 @@ struct NEAT::Genome_t::Impl {
 	Impl() : m_next_node_gene(0), m_max_innovation_mutation(0), m_fitness(0.0), m_adjusted_fitness(0.0) { }
 
 	bool checkIfRecurrentConnection(int innoNum);
-	SparseMatrix_t<double> W_helper(int min_size, bool recurrent);
+	SparseMatrix_t<double> W_helper(int min_size);
 
 	// crossover/mutate helpers
 	void mutateAllConnectionWeights();
@@ -335,52 +335,21 @@ struct NEAT::Genome_t::Impl {
 	double m_adjusted_fitness;
 };
 
-bool NEAT::Genome_t::Impl::checkIfRecurrentConnection(int innoNum)
-{
-	std::list<int> connectionBFS;
-	std::map<int, ConnectionGene_t>::iterator testConnection_it = m_connection_genes.find(innoNum);
-	connectionBFS.push_back(testConnection_it->second.getOutIndex());
-	const int inIndex = testConnection_it->second.getInIndex();
-
-	// can we get from outIndex to inIndex using only non-recurrent edges? If so, then adding this edge will create a recurrent loop
-	while (!connectionBFS.empty()) {
-		const int currentNode = connectionBFS.front();
-		connectionBFS.pop_front();
-
-		for (std::map<int, ConnectionGene_t>::const_iterator it = m_connection_genes.begin(); it != m_connection_genes.end(); ++it) {
-			if (it->second.isEnabled() && !it->second.isRecurrent()) {
-				if (it->second.getInIndex() == currentNode) {
-					if (it->second.getOutIndex() == inIndex) {
-						// we found a cycle!
-						testConnection_it->second.setRecurrent(true);
-						return true;
-					}
-					else {
-						connectionBFS.push_back(it->second.getOutIndex());
-					}
-				}
-			}
-		}
-	}
-
-	return false;
-}
-
-SparseMatrix_t<double> NEAT::Genome_t::Impl::W_helper(int min_size, bool recurrent)
+SparseMatrix_t<double> NEAT::Genome_t::Impl::W_helper(int min_size)
 {
 	//TODO: Entirely wrong. See http://www.cs.ucf.edu/~kstanley/neat.html "How are networks with arbitrary topologies activated? "
 	const int size = max(min_size, m_next_node_gene);
 	SparseMatrix_t<double> rval(size, size);
 
 	for (std::map<int, ConnectionGene_t>::const_iterator it = m_connection_genes.begin(); it != m_connection_genes.end(); ++it) {
-		if (it->second.isEnabled() && it->second.isRecurrent() == recurrent) {
+		if (it->second.isEnabled()) {
 			// yes, out is the row, in is the column. Since the state is a vertical vector, imagine input[0] = 1, and we have a connection (0, 4).
 			// In that example we would expect node 4 to be lit in the resultant vector
 			rval.addElem(it->second.getWeight(), it->second.getOutIndex(), it->second.getInIndex());
 		}
 	}
 
-	return rval.fullyExpand();
+	return rval;
 }
 
 void NEAT::Genome_t::Impl::mutateAllConnectionWeights()
@@ -502,7 +471,6 @@ int NEAT::Genome_t::addConnectionGene(int in, int out, double weight)
 		existingGene.setWeight(weight);
 		std::pair<std::map<int, ConnectionGene_t>::iterator, bool> add_rval = pimpl->m_connection_genes.insert(std::make_pair(existingGene.getInnovationNumber(), existingGene));
 		if (add_rval.second) {
-			pimpl->checkIfRecurrentConnection(existingGene.getInnovationNumber());
 			return existingGene.getInnovationNumber();
 		}
 		else
@@ -514,7 +482,6 @@ int NEAT::Genome_t::addConnectionGene(int in, int out, double weight)
 	pimpl->m_connection_genes.insert(std::make_pair(newGene.getInnovationNumber(), newGene));
 	pimpl->m_max_innovation_mutation = newGene.getInnovationNumber();
 	g_all_connections.insert(std::make_pair(std::make_pair(in, out), newGene));
-	pimpl->checkIfRecurrentConnection(newGene.getInnovationNumber());
 	return newGene.getInnovationNumber();
 }
 
@@ -542,7 +509,6 @@ bool NEAT::Genome_t::updateConnectionGene(int in, int out, double weight)
 double NEAT::Genome_t::delta(const Genome_t & rhs) const
 {
 	std::set<int> match, disjoint_lhs, disjoint_rhs, excess_lhs, excess_rhs;
-	//std::vector<int> match, disjoint_lhs, disjoint_rhs, excess_lhs, excess_rhs;
 	calculateDisjointExcess(rhs, match, disjoint_lhs, disjoint_rhs, excess_lhs, excess_rhs);
 
 	const size_t excess_cnt = excess_lhs.size() + excess_rhs.size();
@@ -551,7 +517,6 @@ double NEAT::Genome_t::delta(const Genome_t & rhs) const
 
 	double weight_diff(0.0);
 	for (std::set<int>::const_iterator it = match.begin(); it != match.end(); ++it) {
-	//for (std::vector<int>::const_iterator it = match.begin(); it != match.end(); ++it) {
 		weight_diff += abs(pimpl->m_connection_genes.find(*it)->second.getWeight() - rhs.pimpl->m_connection_genes.find(*it)->second.getWeight());
 	}
 
@@ -592,14 +557,16 @@ void NEAT::Genome_t::calculateDisjointExcess(const Genome_t & rhs, std::set<int>
 	}
 }
 
+// with the way that these neural networks are designed, "inputs" really consist of intputs, outputs, and hidden.
+// we can safely treat Wxh == Whh
 SparseMatrix_t<double> NEAT::Genome_t::Wxh(int min_size) const
 {
-	return pimpl->W_helper(min_size, false);
+	return pimpl->W_helper(min_size);
 }
 
 SparseMatrix_t<double> NEAT::Genome_t::Whh(int min_size) const
 {
-	return pimpl->W_helper(min_size, true);
+	return pimpl->W_helper(min_size);
 }
 
 double NEAT::Genome_t::getFitness() const

@@ -456,11 +456,12 @@ namespace NEATUnitTests
 			AssertIsEssentiallyEqual(0.0, s0[0]);
 			AssertIsEssentiallyEqual(0.0, s0[1]);
 			AssertIsEssentiallyEqual(0.0, s0[2]);
-			AssertIsEssentiallyEqual(1.52, s0[3]);
+			AssertIsEssentiallyEqual(1.2, s0[3]);
 			AssertIsEssentiallyEqual(0.8, s0[4]);
 
 			std::vector<double> s1;
 			try {
+				// g.Whh().mult(s0) == {{0}, {0}, {0}, {0.32}, {0.72}}
 				s1 = addVectors(g.Wxh().mult({ 1,1,1,0,0 }), g.Whh().mult(s0));
 			}
 			catch (std::runtime_error&) {
@@ -471,7 +472,7 @@ namespace NEATUnitTests
 			AssertIsEssentiallyEqual(0.0, s1[1]);
 			AssertIsEssentiallyEqual(0.0, s1[2]);
 			AssertIsEssentiallyEqual(1.52, s1[3]);
-			AssertIsEssentiallyEqual(1.712, s1[4]);
+			AssertIsEssentiallyEqual(1.52, s1[4]);
 		}
 	};
 
