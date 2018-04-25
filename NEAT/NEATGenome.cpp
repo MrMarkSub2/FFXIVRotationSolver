@@ -28,14 +28,6 @@ const int NEAT::Population_t::min_species_size = 5; // don't let us have species
 const double NEAT::Population_t::interspecies_mating_rate = 0.001; // very tiny chance of breeding between two different species
 
 namespace {
-	double randDouble(double min = 0.0, double max = 1.0) {
-		return (double)rand() / INT_MAX * (max - min) + min;
-	}
-
-	int randInt(int min = 0, int max = 100) {
-		return rand() % (max - min + 1) + min;
-	}
-
 	std::map<std::pair<int, int>, NEAT::ConnectionGene_t> g_all_connections;
 }
 
