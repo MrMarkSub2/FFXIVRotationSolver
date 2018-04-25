@@ -149,7 +149,6 @@
   <ItemGroup>
     <ClInclude Include="EvolutionaryAlgorithm.h" />
     <ClInclude Include="GEPDecisionTree.h" />
-    <ClInclude Include="NEAT.h" />
     <ClInclude Include="NEATGenome.h" />
     <ClInclude Include="SparseMatrix.h" />
     <ClInclude Include="stdafx.h" />
@@ -172,7 +171,6 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="EvolutionaryAlgorithm.cpp" />
-    <ClCompile Include="NEAT.cpp" />
     <ClCompile Include="NEATGenome.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

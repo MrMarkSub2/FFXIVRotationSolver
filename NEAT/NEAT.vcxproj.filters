@@ -27,9 +27,6 @@
     <ClInclude Include="EvolutionaryAlgorithm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NEAT.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="NEATGenome.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -48,9 +45,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="EvolutionaryAlgorithm.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NEAT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NEATGenome.cpp">
