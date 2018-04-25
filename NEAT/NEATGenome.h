@@ -84,27 +84,12 @@ namespace NEAT {
 		                             std::set<int>& excess_lhs, std::set<int>& excess_rhs) const;
 
 		// these matrices are used for fitness evaluation via matrix-vector multiplication
-		//TODO: I think I'm doing this wrong.
-		/* http://www.cs.ucf.edu/~kstanley/neat.html
-		 * The activation function, bool Network::activate(), gives the specifics. The implementation is of course considerably different than for a 
-		 * simple layered feedforward network. Each node adds up the activation from all incoming nodes from the previous timestep. (The function also 
-		 * handles a special "time delayed" connection, but that is not used by the current version of NEAT in any experiments that we have published.) 
-		 * Another way to understand it is to realize that activation does not travel all the way from the input layer to the output layer in a single 
-		 * timestep. In a single timestep, activation only travels from one neuron to the next. So it takes several timesteps for activation to get from 
-		 * the inputs to the outputs. If you think about it, this is the way it works in a real brain, where it takes time for a signal hitting your eyes 
-		 * to get to the cortex because it travels over several neural connections. 
-		 */
-		//TODO: I saw the delay in traveling through multiple layers in a single step, and assumed bug. This insinuates feature.
-		SparseMatrix_t<double> NEAT_API Wxh(int min_size = 0) const; // input to hidden, all non-recurrent connections
-		SparseMatrix_t<double> NEAT_API Whh(int min_size = 0) const; // hidden to hidden, all recurrent connections
+		SparseMatrix_t<double> NEAT_API Wxh(int min_size = 0) const;
+		SparseMatrix_t<double> NEAT_API Whh(int min_size = 0) const;
 
 		// calculating fitness depends on the model which lives in an unlinked toolkit. We rely on the mainprog to set this for us
 		double NEAT_API getFitness() const;
 		void NEAT_API setFitness(double fitness);
-
-		// adjusted value dependent on sigma delta, used in determining speciation
-		double NEAT_API getAdjustedFitness() const;
-		void NEAT_API setAdjustedFitness(double adjusted_fitness);
 
 		Genome_t NEAT_API makeOffspring(const Genome_t& rhs) const;
 
@@ -164,9 +149,6 @@ namespace NEAT {
 		// useful for bringing a species from last generation over and keeping its old speciesId
 		// returns new genome's id
 		int NEAT_API addToSpecificSpecies(const Genome_t& genome, int speciesId);
-
-		//TODO: If the maximum fitness of a species did not improve in 15 generations, the networks in the stagnant species were not allowed to reproduce
-		//      Do I want this? It seems like this could eliminate strong contenders
 
 		// of course, one of the most important functions: evolve us to the next generation!
 		// please refrain from making TNG jokes...

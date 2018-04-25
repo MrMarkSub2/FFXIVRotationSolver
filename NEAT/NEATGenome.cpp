@@ -34,12 +34,25 @@ namespace {
 struct NEAT::Population_t::Impl {
 	Impl();
 
-double calculateAdjustedFitness(int genome, int species);
+	double calculateAdjustedFitness(int genome, int species);
+	void registerHighestFitness(int species, double fitness);
 
-int m_generation_num;
-std::vector<NEAT::Genome_t> m_genomes;
-std::map<int, std::set<int>> m_species_lists;
-double delta_t;
+	struct Species_t {
+		Species_t()
+			: m_highest_fitness(0.0), m_stale_generations(0)
+		{ }
+
+		double staleSpeciesPenalty() const;
+
+		std::set<int> m_genomes;
+		double m_highest_fitness;
+		int m_stale_generations;
+	};
+
+	int m_generation_num;
+	std::vector<NEAT::Genome_t> m_genomes;
+	std::map<int, Species_t> m_species_lists;
+	double delta_t;
 };
 
 NEAT::Population_t::Impl::Impl()
@@ -49,11 +62,33 @@ NEAT::Population_t::Impl::Impl()
 double NEAT::Population_t::Impl::calculateAdjustedFitness(int genome, int species)
 {
 	int denom = 1;
-	std::map<int, std::set<int>>::const_iterator it = m_species_lists.find(species);
+	std::map<int, Species_t>::const_iterator it = m_species_lists.find(species);
 	if (it != m_species_lists.end())
-		denom = (int)it->second.size();
+		denom = (int)it->second.m_genomes.size();
 
-	return m_genomes[genome].getFitness() / denom;
+	return m_genomes[genome].getFitness() / denom * it->second.staleSpeciesPenalty();
+}
+
+void NEAT::Population_t::Impl::registerHighestFitness(int species, double fitness)
+{
+	std::map<int, Species_t>::iterator it = m_species_lists.find(species);
+	if (it != m_species_lists.end()) {
+		if (fitness > it->second.m_highest_fitness) {
+			it->second.m_highest_fitness = fitness;
+			it->second.m_stale_generations = 0;
+		}
+		else {
+			++it->second.m_stale_generations;
+		}
+	}
+}
+
+double NEAT::Population_t::Impl::Species_t::staleSpeciesPenalty() const
+{
+	if (m_stale_generations <= NEAT::Population_t::species_stagnation_limit)
+		return 1.0; // no penalty!
+
+	return (double)NEAT::Population_t::species_stagnation_limit / m_stale_generations; // slowly degrade score of dead-end species
 }
 
 NEAT::Population_t::Population_t() : pimpl(new Impl()) { }
@@ -98,7 +133,7 @@ void NEAT::Population_t::setFitness(int id, double fitness)
 std::vector<int> NEAT::Population_t::getSpeciesIds() const
 {
 	std::vector<int> rval;
-	for (std::map<int, std::set<int>>::const_iterator it = pimpl->m_species_lists.begin(); it != pimpl->m_species_lists.end(); ++it)
+	for (std::map<int, Impl::Species_t>::const_iterator it = pimpl->m_species_lists.begin(); it != pimpl->m_species_lists.end(); ++it)
 		rval.push_back(it->first);
 
 	return rval;
@@ -106,11 +141,11 @@ std::vector<int> NEAT::Population_t::getSpeciesIds() const
 
 std::vector<int> NEAT::Population_t::getGenomeIdsOfSpecies(int speciesId) const
 {
-	std::map<int, std::set<int>>::const_iterator species_it = pimpl->m_species_lists.find(speciesId);
+	std::map<int, Impl::Species_t>::const_iterator species_it = pimpl->m_species_lists.find(speciesId);
 
 	std::vector<int> rval;
 	if (species_it != pimpl->m_species_lists.end())
-		std::copy(species_it->second.begin(), species_it->second.end(), std::back_inserter(rval));
+		std::copy(species_it->second.m_genomes.begin(), species_it->second.m_genomes.end(), std::back_inserter(rval));
 
 	return rval;
 }
@@ -118,9 +153,9 @@ std::vector<int> NEAT::Population_t::getGenomeIdsOfSpecies(int speciesId) const
 std::vector<int> NEAT::Population_t::getBestGenomeIdsOfSpecies(int speciesId, double percentile) const
 {
 	std::vector<std::pair<int, double>> genome_id_to_fitness;
-	std::map<int, std::set<int>>::const_iterator species_it = pimpl->m_species_lists.find(speciesId);
+	std::map<int, Impl::Species_t>::const_iterator species_it = pimpl->m_species_lists.find(speciesId);
 	if (species_it != pimpl->m_species_lists.end()) {
-		for (std::set<int>::const_iterator genome_it = species_it->second.begin(); genome_it != species_it->second.end(); ++genome_it) {
+		for (std::set<int>::const_iterator genome_it = species_it->second.m_genomes.begin(); genome_it != species_it->second.m_genomes.end(); ++genome_it) {
 			Genome_t& genome = pimpl->m_genomes[*genome_it];
 			genome_id_to_fitness.push_back(std::make_pair(*genome_it, genome.getFitness()));
 		}
@@ -195,7 +230,7 @@ int NEAT::Population_t::addToSpecificSpecies(const NEAT::Genome_t & genome, int 
 	if (speciesId >= NEAT::Population_t::g_nextSpeciesNumber)
 		NEAT::Population_t::g_nextSpeciesNumber = speciesId + 1;
 
-	pimpl->m_species_lists[speciesId].insert(genomeId);
+	pimpl->m_species_lists[speciesId].m_genomes.insert(genomeId);
 	return genomeId;
 }
 
@@ -229,6 +264,10 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 		int speciesId = current_species_list[s];
 		std::vector<int> current_genome_list = getGenomeIdsOfSpecies(speciesId);
 		int current_genome_list_size = (int)current_genome_list.size();
+
+		// is this a stagnant species?
+		double highestSpeciesFitness = getGenome(getFittestGenomeIdofSpecies(speciesId)).getFitness();
+		pimpl->registerHighestFitness(speciesId, highestSpeciesFitness);
 
 		for (int g = 0; g < current_genome_list_size; ++g) {
 			// start calculation adjusted fitness... We'll use this later
@@ -316,7 +355,6 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 struct NEAT::Genome_t::Impl {
 	Impl() : m_next_node_gene(0), m_max_innovation_mutation(0), m_fitness(0.0), m_adjusted_fitness(0.0) { }
 
-	bool checkIfRecurrentConnection(int innoNum);
 	SparseMatrix_t<double> W_helper(int min_size);
 
 	// crossover/mutate helpers
@@ -579,16 +617,6 @@ void NEAT::Genome_t::setFitness(double fitness)
 	pimpl->m_fitness = fitness;
 }
 
-double NEAT::Genome_t::getAdjustedFitness() const
-{
-	return pimpl->m_adjusted_fitness;
-}
-
-void NEAT::Genome_t::setAdjustedFitness(double adjusted_fitness)
-{
-	pimpl->m_adjusted_fitness = adjusted_fitness;
-}
-
 NEAT::Genome_t NEAT::Genome_t::makeOffspring(const Genome_t & rhs) const
 {
 	Genome_t rval;
@@ -602,9 +630,8 @@ NEAT::Genome_t NEAT::Genome_t::makeOffspring(const Genome_t & rhs) const
 
 	rval.mutate();
 
-	// these need to be recalculated, zero them out
+	// this need to be recalculated, zero them out
 	rval.setFitness(0.0);
-	rval.setAdjustedFitness(0.0);
 
 	return rval;
 }
