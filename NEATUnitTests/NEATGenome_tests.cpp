@@ -85,15 +85,20 @@ namespace NEATUnitTests
 			NEAT::Genome_t g1;
 			int in_num = g1.addNodeGene(NEAT::INPUT_NODE, "In #1");
 			int out_num = g1.addNodeGene(NEAT::OUTPUT_NODE, "Out #1");
-			g1.addConnectionGene(in_num, out_num, 1.0);
+			int connection1 = g1.addConnectionGene(in_num, out_num, NEAT::getNormalizedRand());
+			in_num = g1.addNodeGene(NEAT::INPUT_NODE, "In #2");
+			int connection2 = g1.addConnectionGene(in_num, out_num, NEAT::getNormalizedRand());
 
 			for (int i = 0; i < 20; ++i) {
+				g1.updateConnectionGene(connection1, NEAT::getNormalizedRand());
+				g1.updateConnectionGene(connection2, NEAT::getNormalizedRand());
 				int id = pop.addToSpecificSpecies(g1, 0);
-				pop.setFitness(id, id);
+				pop.setFitness(id, id+1);
 			}
 
-			for (int i = 0; i < 5; ++i) {
+			for (int i = 0; i < 10; ++i) {
 				pop = pop.createNextGeneration();
+				Assert::AreNotEqual(0, (int)pop.getSpeciesIds().size(), L"No more species!!!");
 				Assert::AreEqual(i+1, pop.getGeneration(), L"Generation number not incrementing");
 			}
 		}

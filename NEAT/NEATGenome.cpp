@@ -1,9 +1,7 @@
 #include "stdafx.h"
 #include "NEATGenome.h"
-#include <chrono>
 #include <iterator>
 #include <list>
-#include <random>
 
 int NEAT::ConnectionGene_t::g_nextInnovationNumber = 0;
 int NEAT::Population_t::g_nextSpeciesNumber = 0;
@@ -29,7 +27,6 @@ const int NEAT::Population_t::species_stagnation_limit = 15; // start to choke i
 const int NEAT::Population_t::min_species_size = 5; // don't let us have species with just 1 or 2 genomes
 const double NEAT::Population_t::interspecies_mating_rate = 0.001; // very tiny chance of breeding between two different species
 
-
 namespace {
 	double randDouble(double min = 0.0, double max = 1.0) {
 		return (double)rand() / INT_MAX * (max - min) + min;
@@ -40,15 +37,6 @@ namespace {
 	}
 
 	std::map<std::pair<int, int>, NEAT::ConnectionGene_t> g_all_connections;
-
-	// gaussian distribution, mean = 0.0, stdev = 1.0
-	double getNormalizedRand(double mean = 0.0, double stdev = 1.0) {
-		static unsigned seed((unsigned)std::chrono::system_clock::now().time_since_epoch().count());
-		static std::default_random_engine generator(seed);
-
-		std::normal_distribution<double> distribution(mean, stdev);
-		return distribution(generator);
-	}
 }
 
 struct NEAT::Population_t::Impl {
@@ -77,15 +65,17 @@ double NEAT::Population_t::Impl::calculateAdjustedFitness(int genome, int specie
 }
 
 NEAT::Population_t::Population_t() : pimpl(new Impl()) { }
-NEAT::Population_t::Population_t(const Population_t & p) : pimpl(new Impl(*p.pimpl)) { }
+NEAT::Population_t::Population_t(NEAT::Population_t && p) noexcept = default;
+NEAT::Population_t& NEAT::Population_t::operator=(NEAT::Population_t && p) noexcept = default;
+NEAT::Population_t::Population_t(const NEAT::Population_t & p) : pimpl(new Impl(*p.pimpl)) { }
 NEAT::Population_t & NEAT::Population_t::operator=(const NEAT::Population_t & p)
 {
 	if (this != &p)
-		pimpl = new Impl(*p.pimpl);
+		pimpl.reset(new Impl(*p.pimpl));
 
 	return *this;
 }
-NEAT::Population_t::~Population_t() { delete pimpl; }
+NEAT::Population_t::~Population_t() = default;
 
 int NEAT::Population_t::size() const
 {
@@ -276,7 +266,7 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 	if (nextPopSize != NEAT::Population_t::genome_count) {
 		int to_modify = speciesCnt - 1;
 		int to_modify_by = NEAT::Population_t::genome_count - nextPopSize;
-		while ((to_modify > 0) && ((speciesAllotment[to_modify] <= 1) || (speciesAllotment[to_modify] + to_modify_by <= 1))) {
+		while ((to_modify > 0) && (speciesAllotment[to_modify] <= 1) && (speciesAllotment[to_modify] + to_modify_by <= 1)) {
 			--to_modify;
 		}
 		speciesAllotment[to_modify] += to_modify_by;
@@ -489,15 +479,18 @@ NEAT::Genome_t::Genome_t()
 	// generate all standardized node genes
 	// use enum values so that I can always figure out what node maps to what
 }
+NEAT::Genome_t::Genome_t(Genome_t &&) noexcept = default;
+NEAT::Genome_t & NEAT::Genome_t::operator=(Genome_t &&) noexcept = default;
 NEAT::Genome_t::Genome_t(const NEAT::Genome_t & g) : pimpl(new Impl(*g.pimpl)) { }
 NEAT::Genome_t & NEAT::Genome_t::operator=(const NEAT::Genome_t & g)
 {
-	if (this != &g)
-		pimpl = new Impl(*g.pimpl);
+	if (this != &g) {
+		pimpl.reset(new Impl(*g.pimpl));
+	}
 
 	return *this;
 }
-NEAT::Genome_t::~Genome_t() { delete pimpl; }
+NEAT::Genome_t::~Genome_t() = default;
 
 int NEAT::Genome_t::addNodeGene(NODETYPE nodetype, const std::string & label)
 {
@@ -750,15 +743,17 @@ NEAT::NodeGene_t::Impl::Impl(int index, NODETYPE nodetype, const std::string& la
 }
 
 NEAT::NodeGene_t::NodeGene_t(int index, NODETYPE nodetype, const std::string & label) : pimpl(new Impl(index, nodetype, label)) { }
+NEAT::NodeGene_t::NodeGene_t(NEAT::NodeGene_t &&) noexcept = default;
+NEAT::NodeGene_t & NEAT::NodeGene_t::operator=(NEAT::NodeGene_t &&) noexcept = default;
 NEAT::NodeGene_t::NodeGene_t(const NEAT::NodeGene_t & ng) : pimpl(new Impl(*ng.pimpl)) { }
 NEAT::NodeGene_t & NEAT::NodeGene_t::operator=(const NEAT::NodeGene_t & ng)
 {
 	if (this != &ng)
-		pimpl = new Impl(*ng.pimpl);
+		pimpl.reset(new Impl(*ng.pimpl));
 
 	return *this;
 }
-NEAT::NodeGene_t::~NodeGene_t() { delete pimpl; }
+NEAT::NodeGene_t::~NodeGene_t() = default;
 
 std::string NEAT::NodeGene_t::getLabel() const
 {

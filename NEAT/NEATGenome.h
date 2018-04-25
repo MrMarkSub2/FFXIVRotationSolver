@@ -7,6 +7,7 @@
 #endif
 
 #include <map>
+#include <memory>
 #include <set>
 #include "SparseMatrix.h"
 
@@ -48,34 +49,38 @@ namespace NEAT {
 		HIDDEN_NODE
 	};
 
-	class NEAT_API NodeGene_t {
+	class NodeGene_t {
 	public:
-		NodeGene_t(int index, NODETYPE nodetype, const std::string& label);
-		NodeGene_t(const NodeGene_t & ng);
-		NodeGene_t& NodeGene_t::operator=(const NodeGene_t& ng);
-		~NodeGene_t();
+		NEAT_API NodeGene_t(int index, NODETYPE nodetype, const std::string& label);
+		NEAT_API NodeGene_t(NodeGene_t && ng) noexcept;
+		NEAT_API NodeGene_t& NodeGene_t::operator=(NodeGene_t && ng) noexcept;
+		NEAT_API NodeGene_t(const NodeGene_t & ng);
+		NEAT_API NodeGene_t& NodeGene_t::operator=(const NodeGene_t& ng);
+		NEAT_API ~NodeGene_t();
 
-		std::string getLabel() const;
+		std::string NEAT_API getLabel() const;
 
 	private:
 		struct Impl;
-		Impl* pimpl;
+		std::unique_ptr<Impl> pimpl;
 	};
 
-	class NEAT_API Genome_t {
+	class Genome_t {
 	public:
-		Genome_t();
-		Genome_t(const Genome_t & g);
-		Genome_t& Genome_t::operator=(const Genome_t& g);
-		~Genome_t();
+		NEAT_API Genome_t();
+		NEAT_API Genome_t(Genome_t && g) noexcept;
+		NEAT_API Genome_t& operator=(Genome_t && g) noexcept;
+		NEAT_API Genome_t(const Genome_t & g);
+		NEAT_API Genome_t& Genome_t::operator=(const Genome_t& g);
+		NEAT_API ~Genome_t();
 
-		int addNodeGene(NODETYPE nodetype, const std::string& label); // returns -1 if already exists
-		int addConnectionGene(int in, int out, double weight); // returns -1 if already exists
-		bool updateConnectionGene(int innovation, double weight); // returns false if does not exist
-		bool updateConnectionGene(int in, int out, double weight); // returns false if does not exist
+		int NEAT_API addNodeGene(NODETYPE nodetype, const std::string& label); // returns -1 if already exists
+		int NEAT_API addConnectionGene(int in, int out, double weight); // returns -1 if already exists
+		bool NEAT_API updateConnectionGene(int innovation, double weight); // returns false if does not exist
+		bool NEAT_API updateConnectionGene(int in, int out, double weight); // returns false if does not exist
 
-		double delta(const Genome_t& rhs) const;
-		void calculateDisjointExcess(const Genome_t& rhs, std::set<int>& match, std::set<int>& disjoint_lhs, std::set<int>& disjoint_rhs,
+		double NEAT_API delta(const Genome_t& rhs) const;
+		void NEAT_API calculateDisjointExcess(const Genome_t& rhs, std::set<int>& match, std::set<int>& disjoint_lhs, std::set<int>& disjoint_rhs,
 		                             std::set<int>& excess_lhs, std::set<int>& excess_rhs) const;
 
 		// these matrices are used for fitness evaluation via matrix-vector multiplication
@@ -90,22 +95,22 @@ namespace NEAT {
 		 * to get to the cortex because it travels over several neural connections. 
 		 */
 		//TODO: I saw the delay in traveling through multiple layers in a single step, and assumed bug. This insinuates feature.
-		SparseMatrix_t<double> Wxh(int min_size = 0) const; // input to hidden, all non-recurrent connections
-		SparseMatrix_t<double> Whh(int min_size = 0) const; // hidden to hidden, all recurrent connections
+		SparseMatrix_t<double> NEAT_API Wxh(int min_size = 0) const; // input to hidden, all non-recurrent connections
+		SparseMatrix_t<double> NEAT_API Whh(int min_size = 0) const; // hidden to hidden, all recurrent connections
 
 		// calculating fitness depends on the model which lives in an unlinked toolkit. We rely on the mainprog to set this for us
-		double getFitness() const;
-		void setFitness(double fitness);
+		double NEAT_API getFitness() const;
+		void NEAT_API setFitness(double fitness);
 
 		// adjusted value dependent on sigma delta, used in determining speciation
-		double getAdjustedFitness() const;
-		void setAdjustedFitness(double adjusted_fitness);
+		double NEAT_API getAdjustedFitness() const;
+		void NEAT_API setAdjustedFitness(double adjusted_fitness);
 
-		Genome_t makeOffspring(const Genome_t& rhs) const;
+		Genome_t NEAT_API makeOffspring(const Genome_t& rhs) const;
 
 	private:
 		struct Impl;
-		Impl *pimpl;
+		std::unique_ptr<Impl> pimpl;
 
 		Genome_t crossover(const Genome_t& rhs) const;
 		void mutate();
@@ -122,54 +127,56 @@ namespace NEAT {
 		static const double mutate_add_node;
 	};
 
-	class NEAT_API Population_t {
+	class Population_t {
 	public:
-		Population_t();
-		Population_t(const Population_t & p);
-		Population_t& Population_t::operator=(const Population_t& p);
-		~Population_t();
+		NEAT_API Population_t();
+		NEAT_API Population_t(Population_t && p) noexcept;
+		NEAT_API Population_t& Population_t::operator=(Population_t && p) noexcept;
+		NEAT_API Population_t(const Population_t & p);
+		NEAT_API Population_t& Population_t::operator=(const Population_t& p);
+		NEAT_API ~Population_t();
 
 		// genome ids are always 0 to n contiguously, as opposed to connection/species innovation number
-		int size() const;
+		int NEAT_API size() const;
 
-		int getGeneration() const;
+		int NEAT_API getGeneration() const;
 
 		// const reference, don't let us modify directly through this
-		const Genome_t& getGenome(int id) const;
+		const NEAT::Genome_t NEAT_API & getGenome(int id) const;
 		// since we can't modify a genome through the getter, but we do need access to setFitness, we expose it here
 		// added benefit: this helps us track the species's champion
-		void setFitness(int id, double fitness);
+		void NEAT_API setFitness(int id, double fitness);
 
 		// returns list of all species (e.g. species #9, species #14, species #20)
-		std::vector<int> getSpeciesIds() const;
+		std::vector<int> NEAT_API getSpeciesIds() const;
 		// returns list of all genomes in a given species (e.g. species #9 contains genomes #26, #87, #186)
-		std::vector<int> getGenomeIdsOfSpecies(int speciesId) const;
+		std::vector<int> NEAT_API getGenomeIdsOfSpecies(int speciesId) const;
 		// returns list of just the top percentile of genomes in a given species
-		std::vector<int> getBestGenomeIdsOfSpecies(int speciesId, double percentile) const;
+		std::vector<int> NEAT_API getBestGenomeIdsOfSpecies(int speciesId, double percentile) const;
 		// which genome is the fittest of a given species
-		int getFittestGenomeIdofSpecies(int speciesId) const;
+		int NEAT_API getFittestGenomeIdofSpecies(int speciesId) const;
 		// which genome is the fittest of this generation, period
-		int getFittestGenomeId() const;
+		int NEAT_API getFittestGenomeId() const;
 
 		// generally more appropriate, finds if your genome is close enough to an existing species or if it's its own thing
 		// returns new genome's id
-		int addToCorrectSpecies(const Genome_t& genome, std::map<int, Genome_t>& representatives);
+		int NEAT_API addToCorrectSpecies(const Genome_t& genome, std::map<int, Genome_t>& representatives);
 		// useful for bringing a species from last generation over and keeping its old speciesId
 		// returns new genome's id
-		int addToSpecificSpecies(const Genome_t& genome, int speciesId);
+		int NEAT_API addToSpecificSpecies(const Genome_t& genome, int speciesId);
 
 		//TODO: If the maximum fitness of a species did not improve in 15 generations, the networks in the stagnant species were not allowed to reproduce
 		//      Do I want this? It seems like this could eliminate strong contenders
 
 		// of course, one of the most important functions: evolve us to the next generation!
 		// please refrain from making TNG jokes...
-		Population_t createNextGeneration();
+		Population_t NEAT_API createNextGeneration();
 
-		static const int genome_count;
+		static const int NEAT_API genome_count;
 		
 	private:
 		struct Impl;
-		Impl* pimpl;
+		std::unique_ptr<Impl> pimpl;
 
 		static const double starting_delta_t;
 		static const double delta_t_step;
