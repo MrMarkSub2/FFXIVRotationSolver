@@ -6,7 +6,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace TestCases
+namespace RDMModelTestCases
 {
     TEST_CLASS(MoveTests)
     {
@@ -272,7 +272,7 @@ namespace TestCases
             // infusion wears off AFTER fleche
             // embolden wears off AFTER embolden
 
-            MoveStates_t movestates(opener_ms, -10 * 1000);
+            MoveStates_t movestates(opener_ms, -9900);
 
             movestates.advanceAndAddMove(end);
 

@@ -5,6 +5,8 @@
 #include <memory>
 
 namespace {
+	//TODO: load this from driver file
+
     // GCD calculations
     const int g_ss = 849;
     const double g_huton = 0.0; /* { 0.0, 0.05, 0.1, 0.15, 0.2 } */
@@ -21,7 +23,8 @@ namespace {
     // Orinx's Gear Comparison Sheet, BiS 340 + Genji + Persimmon, INT 2541
     const double g_infusion_buff = 1.0544957027472286;
 
-    const int g_test_duration = 5 * 60 * 1000; // in ms
+	// 3min duration is a good option because that matches SSS dummy, we can figure out minimum dummy DPS and correlate that to minimum PPS
+    const int g_test_duration = 3 * 60 * 1000; // in ms
 
     // https://www.reddit.com/r/ffxiv/comments/3ccchg/til_the_squares_on_the_map_are_50_yalms_wide/csvrege/
     const int g_running_ms_per_yalm = 6000 / 50;

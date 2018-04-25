@@ -5,7 +5,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace TestCases
+namespace RDMModelTestCases
 {
     std::wstring doublesNotEqualErr(double val, double answer) {
         std::wstringstream rval;

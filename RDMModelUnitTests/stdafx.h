@@ -10,7 +10,7 @@
 // Headers for CppUnitTest
 #include "CppUnitTest.h"
 
-namespace TestCases
+namespace RDMModelTestCases
 {
     std::wstring doublesNotEqualErr(double val, double answer);
     void AssertIsEssentuallyEqual(double val, double answer);

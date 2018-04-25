@@ -22,6 +22,7 @@
     <ProjectGuid>{5076B30B-94F3-45AD-8860-E1F75C2050E4}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>UnitTests</RootNamespace>
+	<VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
     <ProjectName>RDMModelUnitTests</ProjectName>
   </PropertyGroup>

@@ -1,0 +1,10 @@
+All baselines assume 2.42s GCD
+
+Routine: Jolt2 spam
+PPS: 99.17
+
+Routine: Jolt2 - Verthunder - repeat
+PPS: 112.47
+
+Routine: (Jolt2 - Veraero - Jolt2 - Verthunder) x5 - Enhfinisher - Verflare - end
+PPS: 123.52
