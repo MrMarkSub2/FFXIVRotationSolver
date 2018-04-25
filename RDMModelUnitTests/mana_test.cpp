@@ -4,7 +4,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace TestCases
+namespace RDMModelTestCases
 {		
 	TEST_CLASS(ManaTests)
 	{

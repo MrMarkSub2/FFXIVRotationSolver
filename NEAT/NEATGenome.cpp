@@ -1,15 +1,17 @@
 #include "stdafx.h"
 #include "NEATGenome.h"
 #include <chrono>
+#include <iterator>
 #include <list>
 #include <random>
 
 int NEAT::ConnectionGene_t::g_nextInnovationNumber = 0;
+int NEAT::Population_t::g_nextSpeciesNumber = 0;
 
-//TODO: all of these constants are from the NEAT paper, credit it
-const double NEAT::Genome_t::delta_c1 = 1.0;
-const double NEAT::Genome_t::delta_c2 = 1.0;
-const double NEAT::Genome_t::delta_c3 = 0.4;
+// all of these constants are from the NEAT paper and/or FAQ
+const double NEAT::Genome_t::delta_c1 = 2.0;
+const double NEAT::Genome_t::delta_c2 = 2.0;
+const double NEAT::Genome_t::delta_c3 = 1.0;
 
 const double NEAT::Genome_t::mutate_without_crossover_rate = 0.25;
 const double NEAT::Genome_t::disable_gene_rate = 0.75;
@@ -17,6 +19,16 @@ const double NEAT::Genome_t::mutate_all_connection_weights = 0.8;
 const double NEAT::Genome_t::generate_new_connection_weight = 0.1;
 const double NEAT::Genome_t::mutate_add_connection = 0.05;
 const double NEAT::Genome_t::mutate_add_node = 0.03;
+
+const double NEAT::Population_t::starting_delta_t = 6.0;
+const double NEAT::Population_t::delta_t_step = 0.3;
+const int NEAT::Population_t::genome_count = 150; // seems small for my complexity, consider 200-500... depends on how fast the fitness function is
+const int NEAT::Population_t::target_species_count = 10; // probably needs experimentation
+const double NEAT::Population_t::breeding_percentile = 0.2; // weaker genomes don't get to reproduce. Percentile applied to each species separately
+const int NEAT::Population_t::species_stagnation_limit = 15; // start to choke it off, it's an evolutionary dead-end
+const int NEAT::Population_t::min_species_size = 5; // don't let us have species with just 1 or 2 genomes
+const double NEAT::Population_t::interspecies_mating_rate = 0.001; // very tiny chance of breeding between two different species
+
 
 namespace {
 	double randDouble(double min = 0.0, double max = 1.0) {
@@ -40,8 +52,29 @@ namespace {
 }
 
 struct NEAT::Population_t::Impl {
-	//std::map<int, Species_t> m_species;
+	Impl();
+
+double calculateAdjustedFitness(int genome, int species);
+
+int m_generation_num;
+std::vector<NEAT::Genome_t> m_genomes;
+std::map<int, std::set<int>> m_species_lists;
+double delta_t;
 };
+
+NEAT::Population_t::Impl::Impl()
+	: m_generation_num(0), delta_t(starting_delta_t)
+{ }
+
+double NEAT::Population_t::Impl::calculateAdjustedFitness(int genome, int species)
+{
+	int denom = 1;
+	std::map<int, std::set<int>>::const_iterator it = m_species_lists.find(species);
+	if (it != m_species_lists.end())
+		denom = (int)it->second.size();
+
+	return m_genomes[genome].getFitness() / denom;
+}
 
 NEAT::Population_t::Population_t() : pimpl(new Impl()) { }
 NEAT::Population_t::Population_t(const Population_t & p) : pimpl(new Impl(*p.pimpl)) { }
@@ -54,25 +87,249 @@ NEAT::Population_t & NEAT::Population_t::operator=(const NEAT::Population_t & p)
 }
 NEAT::Population_t::~Population_t() { delete pimpl; }
 
-//void NEAT::Population_t::addToCorrectSpecies(const Genome_t & genome)
-//{
-//	throw;
-//}
+int NEAT::Population_t::size() const
+{
+	return (int)pimpl->m_genomes.size();
+}
 
-//struct NEAT::Species_t::Impl {
-//	std::map<int, NEAT::Genome_t> m_genomes;
-//};
-//
-//NEAT::Species_t::Species_t() : pimpl(new Impl()) { }
-//NEAT::Species_t::Species_t(const NEAT::Species_t & s) : pimpl(new Impl(*s.pimpl)) { }
-//NEAT::Species_t & NEAT::Species_t::operator=(const NEAT::Species_t & s)
-//{
-//	if (this != &s)
-//		pimpl = new Impl(*s.pimpl);
-//
-//	return *this;
-//}
-//NEAT::Species_t::~Species_t() { delete pimpl; }
+int NEAT::Population_t::getGeneration() const
+{
+	return pimpl->m_generation_num;
+}
+
+const NEAT::Genome_t & NEAT::Population_t::getGenome(int id) const
+{
+	if (id < 0 || id >= size())
+		throw std::runtime_error(std::string("Invalid genome id passed to NEAT::Population_t::getGenome"));
+
+	return pimpl->m_genomes[id];
+}
+
+void NEAT::Population_t::setFitness(int id, double fitness)
+{
+	if (id < 0 || id >= size())
+		throw std::runtime_error(std::string("Invalid genome id passed to NEAT::Population_t::setFitness"));
+
+	pimpl->m_genomes[id].setFitness(fitness);
+}
+
+std::vector<int> NEAT::Population_t::getSpeciesIds() const
+{
+	std::vector<int> rval;
+	for (std::map<int, std::set<int>>::const_iterator it = pimpl->m_species_lists.begin(); it != pimpl->m_species_lists.end(); ++it)
+		rval.push_back(it->first);
+
+	return rval;
+}
+
+std::vector<int> NEAT::Population_t::getGenomeIdsOfSpecies(int speciesId) const
+{
+	std::map<int, std::set<int>>::const_iterator species_it = pimpl->m_species_lists.find(speciesId);
+
+	std::vector<int> rval;
+	if (species_it != pimpl->m_species_lists.end())
+		std::copy(species_it->second.begin(), species_it->second.end(), std::back_inserter(rval));
+
+	return rval;
+}
+
+std::vector<int> NEAT::Population_t::getBestGenomeIdsOfSpecies(int speciesId, double percentile) const
+{
+	std::vector<std::pair<int, double>> genome_id_to_fitness;
+	std::map<int, std::set<int>>::const_iterator species_it = pimpl->m_species_lists.find(speciesId);
+	if (species_it != pimpl->m_species_lists.end()) {
+		for (std::set<int>::const_iterator genome_it = species_it->second.begin(); genome_it != species_it->second.end(); ++genome_it) {
+			Genome_t& genome = pimpl->m_genomes[*genome_it];
+			genome_id_to_fitness.push_back(std::make_pair(*genome_it, genome.getFitness()));
+		}
+	}
+
+	std::sort(genome_id_to_fitness.begin(), genome_id_to_fitness.end(),
+		[](const std::pair<int, double>& a, const std::pair<int, double>& b)
+		{ return a.second > b.second; });
+	int best_genome_num = (int)ceil(percentile * genome_id_to_fitness.size());
+	std::vector<int> rval;
+	for (int i = 0; i < best_genome_num; ++i)
+		rval.push_back(genome_id_to_fitness[i].first);
+
+	return rval;
+}
+
+int NEAT::Population_t::getFittestGenomeIdofSpecies(int speciesId) const
+{
+	int highestId = -1;
+	double highestFitness = -1.0;
+	
+	std::vector<int> genome_list = getGenomeIdsOfSpecies(speciesId);
+	for (int i = 0; i < genome_list.size(); ++i) {
+		int testId = genome_list[i];
+		double testFitness = getGenome(testId).getFitness();
+
+		if (testFitness > highestFitness) {
+			highestId = testId;
+			highestFitness = testFitness;
+		}
+	}
+
+	return highestId;
+}
+
+int NEAT::Population_t::getFittestGenomeId() const
+{
+	int highestId = -1;
+	double highestFitness = -1.0;
+
+	for (int i = 0; i < size(); ++i) {
+		double testFitness = getGenome(i).getFitness();
+
+		if (testFitness > highestFitness) {
+			highestId = i;
+			highestFitness = testFitness;
+		}
+	}
+
+	return highestId;
+}
+
+int NEAT::Population_t::addToCorrectSpecies(const NEAT::Genome_t & genome, std::map<int, Genome_t>& representatives)
+{
+	for (std::map<int, Genome_t>::const_iterator rep_it = representatives.begin(); rep_it != representatives.end(); ++rep_it) {
+		if (rep_it->second.delta(genome) <= pimpl->delta_t)
+			return addToSpecificSpecies(genome, rep_it->first);
+	}
+
+	// this genome doesn't fit into any species defined last generation. Thus effective immediately, this is the representative of a new generation
+	representatives[NEAT::Population_t::g_nextSpeciesNumber] = genome;
+	return addToSpecificSpecies(genome, NEAT::Population_t::g_nextSpeciesNumber);
+}
+
+int NEAT::Population_t::addToSpecificSpecies(const NEAT::Genome_t & genome, int speciesId)
+{
+	int genomeId = (int)pimpl->m_genomes.size();
+	pimpl->m_genomes.push_back(genome);
+
+	// if the speciesId doesn't exist already, that's perfectly fine and an expected use case -- create the speciesId
+	// HOWEVER, we must make sure to update the g_nextSpeciesNumber
+	if (speciesId >= NEAT::Population_t::g_nextSpeciesNumber)
+		NEAT::Population_t::g_nextSpeciesNumber = speciesId + 1;
+
+	pimpl->m_species_lists[speciesId].insert(genomeId);
+	return genomeId;
+}
+
+NEAT::Population_t NEAT::Population_t::createNextGeneration()
+{
+	NEAT::Population_t nextPop;
+	
+	nextPop.pimpl->m_generation_num = getGeneration() + 1;
+	
+	std::vector<int> current_species_list = getSpeciesIds();
+	int speciesCnt = (int)current_species_list.size();
+
+	// set species delta. This is adjusted up or down to guide the next population toward a desired number of species
+	nextPop.pimpl->delta_t = pimpl->delta_t;
+	if (nextPop.getGeneration() > 1) {
+		if (speciesCnt < NEAT::Population_t::target_species_count)
+			nextPop.pimpl->delta_t -= NEAT::Population_t::delta_t_step;
+		else if (speciesCnt > NEAT::Population_t::target_species_count)
+			nextPop.pimpl->delta_t += NEAT::Population_t::delta_t_step;
+
+		// make sure we didn't accidentally force the delta too close to 0
+		if (nextPop.pimpl->delta_t < NEAT::Population_t::delta_t_step)
+			nextPop.pimpl->delta_t = NEAT::Population_t::delta_t_step;
+	}
+	
+	std::vector<double> adjusted_fitness_list(speciesCnt, 0.0);
+	std::map<int, NEAT::Genome_t> random_representatives;
+
+	// smoosh together as much as we can into a single passthru
+	for (int s = 0; s < speciesCnt; ++s) {
+		int speciesId = current_species_list[s];
+		std::vector<int> current_genome_list = getGenomeIdsOfSpecies(speciesId);
+		int current_genome_list_size = (int)current_genome_list.size();
+
+		for (int g = 0; g < current_genome_list_size; ++g) {
+			// start calculation adjusted fitness... We'll use this later
+			adjusted_fitness_list[s] += pimpl->calculateAdjustedFitness(current_genome_list[g], speciesId);
+		}
+
+		// randomly sample a single genome from each species
+		int randomId = current_genome_list[randInt(0, current_genome_list_size - 1)];
+		random_representatives[speciesId] = getGenome(randomId);
+	}
+
+	double total_adjusted_fitness = 0.0;
+	for (int s = 0; s < speciesCnt; ++s) {
+		total_adjusted_fitness += adjusted_fitness_list[s];
+	}
+
+	// figure out how many times each species is allowed to breed
+	int nextPopSize = 0;
+	std::vector<int> speciesAllotment(speciesCnt, 0);
+	for (int s = 0; s < speciesCnt; ++s) {
+		int allotment = (int)round(adjusted_fitness_list[s] / total_adjusted_fitness * NEAT::Population_t::genome_count);
+		speciesAllotment[s] = allotment;
+		nextPopSize += allotment;
+	}
+
+	// make sure the allotments didn't get screwed up due to rounding error
+	if (nextPopSize != NEAT::Population_t::genome_count) {
+		int to_modify = speciesCnt - 1;
+		int to_modify_by = NEAT::Population_t::genome_count - nextPopSize;
+		while ((to_modify > 0) && ((speciesAllotment[to_modify] <= 1) || (speciesAllotment[to_modify] + to_modify_by <= 1))) {
+			--to_modify;
+		}
+		speciesAllotment[to_modify] += to_modify_by;
+	}
+
+	for (int s = 0; s < speciesCnt; ++s) {
+		int speciesId = current_species_list[s];
+		std::vector<int> breedingPool = getBestGenomeIdsOfSpecies(speciesId, NEAT::Population_t::breeding_percentile);
+		int breedingPoolCnt = (int)breedingPool.size();
+
+		if (breedingPoolCnt > 0) {
+			for (int i = 0; i < speciesAllotment[s]; ++i) {
+				if (i == 0 && getGenomeIdsOfSpecies(speciesId).size() > NEAT::Population_t::min_species_size) {
+					// carry across fittest member of each (sufficiently-sized) species
+					int fittestGenomeId = getFittestGenomeIdofSpecies(speciesId);
+					nextPop.addToSpecificSpecies(getGenome(fittestGenomeId), speciesId);
+				}
+				else {
+					int id1 = breedingPool[randInt(0, breedingPoolCnt - 1)];
+					int id2;
+
+					if (randDouble() < interspecies_mating_rate) {
+						// interspecies mating
+						do {
+							//TODO: the way I'm doing this is biased toward small species
+							int randSpecies = randInt(0, speciesCnt - 1);
+							std::vector<int> randBreedingPool = getBestGenomeIdsOfSpecies(current_species_list[randSpecies], NEAT::Population_t::breeding_percentile);
+							id2 = randBreedingPool[randInt(0, (int)randBreedingPool.size() - 1)];
+						} while (id1 == id2);
+					}
+					else {
+						// normal mating
+						if (breedingPoolCnt == 1) {
+							// all by myseeeeeelf~
+							id2 = id1;
+						}
+						else {
+							do {
+								id2 = breedingPool[randInt(0, breedingPoolCnt - 1)];
+							} while (id1 == id2);
+						}
+					}
+
+					// make babby, add it to the next generation
+					Genome_t newOffspring = getGenome(id1).makeOffspring(getGenome(id2));
+					nextPop.addToCorrectSpecies(newOffspring, random_representatives);
+				}
+			}
+		}
+	}
+
+	return nextPop;
+}
 
 struct NEAT::Genome_t::Impl {
 	Impl() : m_next_node_gene(0), m_max_innovation_mutation(0), m_fitness(0.0), m_adjusted_fitness(0.0) { }
@@ -129,6 +386,7 @@ bool NEAT::Genome_t::Impl::checkIfRecurrentConnection(int innoNum)
 
 SparseMatrix_t<double> NEAT::Genome_t::Impl::W_helper(int min_size, bool recurrent)
 {
+	//TODO: Entirely wrong. See http://www.cs.ucf.edu/~kstanley/neat.html "How are networks with arbitrary topologies activated? "
 	const int size = max(min_size, m_next_node_gene);
 	SparseMatrix_t<double> rval(size, size);
 
@@ -299,6 +557,7 @@ bool NEAT::Genome_t::updateConnectionGene(int in, int out, double weight)
 double NEAT::Genome_t::delta(const Genome_t & rhs) const
 {
 	std::set<int> match, disjoint_lhs, disjoint_rhs, excess_lhs, excess_rhs;
+	//std::vector<int> match, disjoint_lhs, disjoint_rhs, excess_lhs, excess_rhs;
 	calculateDisjointExcess(rhs, match, disjoint_lhs, disjoint_rhs, excess_lhs, excess_rhs);
 
 	const size_t excess_cnt = excess_lhs.size() + excess_rhs.size();
@@ -307,6 +566,7 @@ double NEAT::Genome_t::delta(const Genome_t & rhs) const
 
 	double weight_diff(0.0);
 	for (std::set<int>::const_iterator it = match.begin(); it != match.end(); ++it) {
+	//for (std::vector<int>::const_iterator it = match.begin(); it != match.end(); ++it) {
 		weight_diff += abs(pimpl->m_connection_genes.find(*it)->second.getWeight() - rhs.pimpl->m_connection_genes.find(*it)->second.getWeight());
 	}
 
@@ -460,39 +720,21 @@ void NEAT::Genome_t::mutate()
 		addConnectionGene(newConnectionPair.first, newConnectionPair.second, getNormalizedRand());
 	}
 
+	//TODO: Consider a mutation that connects one input to EVERY output node. It's a good mutation to jump-start from gen #0
+
 	// should we add a brand new node?
 	if (randDouble() < Genome_t::mutate_add_node) {
-		int newNodeIndex = addNodeGene(NEAT::HIDDEN_NODE, "Hidden");
-		if (newNodeIndex != -1) { // no errors
-			NEAT::ConnectionGene_t oldConnectionCopy = pimpl->findConnectionAddNewNode();
-			addConnectionGene(oldConnectionCopy.getInIndex(), newNodeIndex, 1.0);
-			addConnectionGene(newNodeIndex, oldConnectionCopy.getOutIndex(), oldConnectionCopy.getWeight());
+		// adding a new node requires taking an existing connection and splitting it. Thus, it makes no sense for (starting) networks with zero connections
+		if (pimpl->m_connection_genes.size() > 0) {
+			int newNodeIndex = addNodeGene(NEAT::HIDDEN_NODE, "Hidden");
+			if (newNodeIndex != -1) { // no errors
+				NEAT::ConnectionGene_t oldConnectionCopy = pimpl->findConnectionAddNewNode();
+				addConnectionGene(oldConnectionCopy.getInIndex(), newNodeIndex, 1.0);
+				addConnectionGene(newNodeIndex, oldConnectionCopy.getOutIndex(), oldConnectionCopy.getWeight());
+			}
 		}
 	}
 }
-
-/*NEAT::Genome_t NEAT::Genome_t::createMutation()
-{
-	Genome_t newGenome(*this);
-	for (std::map<int, NEAT::ConnectionGene_t>::iterator it = newGenome.pimpl->m_connection_genes.begin();
-		it != newGenome.pimpl->m_connection_genes.end(); ++it) {
-		// mutating connection weights
-		if (randPercent() < Genome_t::g_connection_weight_mutation) {
-			if (randPercent() < Genome_t::g_connection_weight_uniform) {
-				// modify
-				double weight = it->second.getWeight();
-				it->second.setWeight(weight * (randPercent() * 4.0 - 2.0));
-			}
-			else {
-				// randomize
-				it->second.setWeight(randPercent() * 2.0 - 1.0);
-			}
-		}
-
-		if (randPercent() < Genome_t::g_connection_enabled)
-	}
-	
-}*/
 
 struct NEAT::NodeGene_t::Impl {
 	Impl(int index, NODETYPE nodetype, const std::string& label);

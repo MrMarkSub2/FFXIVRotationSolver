@@ -8,13 +8,14 @@
   - Each existing species is represented by a random genome inside the species from the previous generation. 
     - A given genome g in the current generation is placed in the first species in which g is compatible with the representative genome of that species. 
     - speciate using a compatibility threshold δt versus compatibility distance δ
-      - δt = 3.0
+      - δt = 6.0
+	    - modify δt by +/- 0.3 each generation, to nudge it toward the desired number of species
       - δ = c1 * E / N + c2 * D / N + c3 * W
         - E: number of excess genes
         - D: number of disjoint genes
         - W: average weight **differences** of matching genes, including disabled genes
         - c1, c2, c3: coefficients that allow us to adjust the importance of the three factors
-          - c1 = 1.0, c2 = 1.0, and c3 = 0.4
+          - c1 = 2.0, c2 = 2.0, and c3 = 1.0
         - N: the number of genes in the larger genome
           - N can be set to 1 if both genomes are small, i.e., consist of fewer than 20 genes.
   - If g is not compatible with any existing species, a new species is created with g as its representative.
@@ -33,10 +34,13 @@ Evaluation
     - If there is a loop, remove from temp array, mark as recurrent and continue
   - s_i = U * x_i + W * s_(i-1)
     - U is sparse matrix of weights of non-recurrent connections
+	  - WRONG. From input to hidden (or output), only one hop
     - W is sparse matrix of weights of recurrent connections
+	  - WRONG. From hidden to hidden (or output), moves everything along one hop
   - o_i = ϕ(V * s_i)
     - V is identity matrix to show only outputs
     - We used a modified sigmoidal transfer function, ϕ(x) = 1 / (1+e^(−4.9*x)) at all nodes. 
+	  - How does this compare to softmax? ReLU?
   
 - Next generation
   - If the maximum fitness of a species did not improve in 15 generations, the networks in the stagnant species were not allowed to reproduce
@@ -47,6 +51,7 @@ Evaluation
       - Thus, reduces to the number of organisms in the same species as organism i
       - This reduction is natural since species are already clustered by compatibility using the threshold δt.
   - Species then reproduce by first eliminating the lowest performing members from the population. 
+    - Only the top 20% get to breed
   - The entire population is then replaced by the **offspring** of the remaining organisms in each species.
   - Crossover
     - In each generation, 25% of offspring resulted from mutation without crossover

@@ -6,7 +6,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace TestCases
+namespace RDMModelTestCases
 {
     TEST_CLASS(DPSTests)
     {
@@ -16,7 +16,7 @@ namespace TestCases
             //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
             DPS_t d;
             d.add(5, 5000);
-            TestCases::AssertIsEssentuallyEqual(1.0, d.calc());
+            AssertIsEssentuallyEqual(1.0, d.calc());
         }
 
         TEST_METHOD(CompoundAdd) 
