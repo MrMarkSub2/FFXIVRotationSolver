@@ -27,20 +27,15 @@ Fitness
 
 Evaluation
   - All incoming connections use value from the **current**
-    - Except recurrent (loops) which use **previous**
-  - Sequentially check connections for loops
-    - Add next connection to our temp array
-    - If there is no loop, mark as non-recurrent, continue
-    - If there is a loop, remove from temp array, mark as recurrent and continue
-  - s_i = U * x_i + W * s_(i-1)
-    - U is sparse matrix of weights of non-recurrent connections
-	  - WRONG. From input to hidden (or output), only one hop
-    - W is sparse matrix of weights of recurrent connections
-	  - WRONG. From hidden to hidden (or output), moves everything along one hop
+  - s_i = f(U * x_i + W * s_(i-1))
+    - U is sparse matrix of weights from input to hidden
+    - W is sparse matrix of weights from hidden to hidden
+	  - NOTE: Given how my design is set up, U == W
+	- ReLU applied to the final result
   - o_i = ϕ(V * s_i)
     - V is identity matrix to show only outputs
-    - We used a modified sigmoidal transfer function, ϕ(x) = 1 / (1+e^(−4.9*x)) at all nodes. 
-	  - How does this compare to softmax? ReLU?
+    - We use softmax on the output vector
+	  - How does this compare to a modified sigmoidal transfer function, ϕ(x) = 1 / (1+e^(−4.9*x)) since the NEAT paper recommended this?
   
 - Next generation
   - If the maximum fitness of a species did not improve in 15 generations, the networks in the stagnant species were not allowed to reproduce
