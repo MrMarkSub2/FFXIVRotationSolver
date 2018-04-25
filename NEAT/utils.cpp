@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "utils.h"
+#include <algorithm>
 #include <cmath>
 #include <chrono>
 #include <cfloat>
@@ -36,4 +37,33 @@ double NEAT::randDouble(double min, double max) {
 int NEAT::randInt(int min, int max) {
 	std::uniform_int_distribution<int> distribution(min, max);
 	return distribution(generator);
+}
+
+double NEAT::ReLU(double x)
+{
+	return max(0, x);
+}
+
+std::vector<double> NEAT::softmax(std::vector<double> v)
+{
+	// find max element
+	double v_max = std::numeric_limits<double>::lowest();
+	std::for_each(v.begin(), v.end(), [&](double x) { if (x > v_max) v_max = x; });
+
+	// shift so that biggest value is v_max. Since we take these to e^x, 
+	std::transform(v.begin(), v.end(), v.begin(), [=](double x) { return x - v_max; });
+
+	// take everything e^x, and also record the sum
+	double v_sum = 0.0;
+	std::transform(v.begin(), v.end(), v.begin(), 
+		[&](double x) { 
+		double new_x = exp(x);
+		v_sum += new_x;
+		return new_x;
+	});
+
+	// finally, divide each value e^x / sum(e^x)
+	std::transform(v.begin(), v.end(), v.begin(), [=](double x) { return x / v_sum; });
+
+	return v;
 }

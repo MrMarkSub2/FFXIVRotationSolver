@@ -10,4 +10,11 @@
 // Headers for CppUnitTest
 #include "CppUnitTest.h"
 
-// TODO: reference additional headers your program requires here
+namespace NEATUnitTests
+{
+	std::wstring doublesNotEqualErr(double val, double answer, std::wstring err);
+	std::wstring doublesEqualErr(double val, double answer, std::wstring err);
+	void AssertIsEssentiallyEqual(double answer, double val, std::wstring err);
+	void AssertIsEssentiallyEqual(double answer, double val);
+	void AssertIsNotEssentiallyEqual(double answer, double val, std::wstring err);
+}

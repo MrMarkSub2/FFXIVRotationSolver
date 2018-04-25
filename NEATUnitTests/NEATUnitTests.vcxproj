@@ -167,6 +167,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NEATGenome_tests.cpp" />
+    <ClCompile Include="utils_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NEAT\NEAT.vcxproj">
