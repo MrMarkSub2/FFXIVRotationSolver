@@ -375,7 +375,6 @@ struct NEAT::Genome_t::Impl {
 
 SparseMatrix_t<double> NEAT::Genome_t::Impl::W_helper(int min_size)
 {
-	//TODO: Entirely wrong. See http://www.cs.ucf.edu/~kstanley/neat.html "How are networks with arbitrary topologies activated? "
 	const int size = max(min_size, m_next_node_gene);
 	SparseMatrix_t<double> rval(size, size);
 
