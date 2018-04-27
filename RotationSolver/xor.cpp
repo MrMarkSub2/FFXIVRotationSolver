@@ -27,10 +27,12 @@ void xorSolver_t::Impl::initialize()
 	for (int i = 0; i < NEAT::Population_t::genome_count; ++i) {
 		NEAT::Genome_t mutated_genome(no_connect_genome);
 		//mutated_genome.addConnectionGene(NEAT::randInt(0, 3), NEAT::randInt(0, 3), NEAT::getNormalizedRand());
-		mutated_genome.addConnectionGene(0, 3, NEAT::getNormalizedRand());
-		mutated_genome.addConnectionGene(1, 3, NEAT::getNormalizedRand());
-		mutated_genome.addConnectionGene(2, 3, NEAT::getNormalizedRand());
+		
+		//mutated_genome.addConnectionGene(0, 3, NEAT::getNormalizedRand());
+		//mutated_genome.addConnectionGene(1, 3, NEAT::getNormalizedRand());
+		//mutated_genome.addConnectionGene(2, 3, NEAT::getNormalizedRand());
 
+		mutated_genome.addConnectionGene(NEAT::randInt(0, 2), 3, NEAT::getNormalizedRand());
 
 		m_neat.addToCorrectSpecies(mutated_genome, representatives);
 	}

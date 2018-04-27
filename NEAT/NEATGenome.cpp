@@ -2,9 +2,12 @@
 #include "NEATGenome.h"
 #include <iterator>
 #include <list>
+#include <iostream>
 
 int NEAT::ConnectionGene_t::g_nextInnovationNumber = 0;
 int NEAT::Population_t::g_nextSpeciesNumber = 0;
+
+const double NEAT::ConnectionGene_t::weight_cap = 500.0;
 
 // all of these constants are from the NEAT paper and/or FAQ
 const double NEAT::Genome_t::delta_c1 = 2.0;
@@ -36,6 +39,7 @@ struct NEAT::Population_t::Impl {
 
 	double calculateAdjustedFitness(int genome, int species);
 	void registerHighestFitness(int species, double fitness);
+	void transferSpeciesGenerations(NEAT::Population_t& nextPop);
 
 	struct Species_t {
 		Species_t()
@@ -82,7 +86,17 @@ void NEAT::Population_t::Impl::registerHighestFitness(int species, double fitnes
 		}
 		else {
 			++it->second.m_stale_generations;
+			if (it->second.m_stale_generations >= 12)
+				std::cout << "\tStale  : " << species << " (" << it->second.m_stale_generations << ")" << std::endl;
 		}
+	}
+}
+
+void NEAT::Population_t::Impl::transferSpeciesGenerations(NEAT::Population_t & nextPop)
+{
+	for (std::map<int, Species_t>::const_iterator it = m_species_lists.begin(); it != m_species_lists.end(); ++it) {
+		nextPop.pimpl->m_species_lists[it->first].m_highest_fitness = it->second.m_highest_fitness;
+		nextPop.pimpl->m_species_lists[it->first].m_stale_generations = it->second.m_stale_generations;
 	}
 }
 
@@ -137,7 +151,8 @@ std::vector<int> NEAT::Population_t::getSpeciesIds() const
 {
 	std::vector<int> rval;
 	for (std::map<int, Impl::Species_t>::const_iterator it = pimpl->m_species_lists.begin(); it != pimpl->m_species_lists.end(); ++it)
-		rval.push_back(it->first);
+		if (!it->second.m_genomes.empty())
+			rval.push_back(it->first);
 
 	return rval;
 }
@@ -267,20 +282,27 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 		int speciesId = current_species_list[s];
 		std::vector<int> current_genome_list = getGenomeIdsOfSpecies(speciesId);
 		int current_genome_list_size = (int)current_genome_list.size();
+		//if (current_genome_list_size == 0)
+		//	int foo = 2;
 
 		// is this a stagnant species?
-		double highestSpeciesFitness = getGenome(getFittestGenomeIdofSpecies(speciesId)).getFitness();
+		int fittestGenomeId = getFittestGenomeIdofSpecies(speciesId);
+		double highestSpeciesFitness = getGenome(fittestGenomeId).getFitness();
 		pimpl->registerHighestFitness(speciesId, highestSpeciesFitness);
+		std::cout << "\tSpecies: " << speciesId << "\tGenomes: " << current_genome_list_size << "\tFitness: " << highestSpeciesFitness << std::endl;
 
 		for (int g = 0; g < current_genome_list_size; ++g) {
 			// start calculation adjusted fitness... We'll use this later
+			// average + max... don't overreward outliers, but don't ignore awesome builds
 			adjusted_fitness_list[s] += pimpl->calculateAdjustedFitness(current_genome_list[g], speciesId);
 		}
+		adjusted_fitness_list[s] += pimpl->calculateAdjustedFitness(fittestGenomeId, speciesId) * current_genome_list_size;
 
 		// randomly sample a single genome from each species
 		int randomId = current_genome_list[randInt(0, current_genome_list_size - 1)];
 		random_representatives[speciesId] = getGenome(randomId);
 	}
+	pimpl->transferSpeciesGenerations(nextPop);
 
 	double total_adjusted_fitness = 0.0;
 	for (int s = 0; s < speciesCnt; ++s) {
@@ -305,6 +327,11 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 		}
 		speciesAllotment[to_modify] += to_modify_by;
 	}
+	//int cnt = 0;
+	//for (int i = 0; i < speciesAllotment.size(); ++i)
+	//	cnt += speciesAllotment[i];
+	//if (cnt != NEAT::Population_t::genome_count)
+	//	int oops = 5;
 
 	for (int s = 0; s < speciesCnt; ++s) {
 		int speciesId = current_species_list[s];
@@ -316,6 +343,7 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 				if (i == 0 && getGenomeIdsOfSpecies(speciesId).size() > NEAT::Population_t::min_species_size) {
 					// carry across fittest member of each (sufficiently-sized) species
 					int fittestGenomeId = getFittestGenomeIdofSpecies(speciesId);
+					//std::cout << "\t+ Species " << speciesId << "\tFitness: " << getGenome(fittestGenomeId).getFitness() << std::endl;
 					nextPop.addToSpecificSpecies(getGenome(fittestGenomeId), speciesId);
 				}
 				else {
@@ -752,6 +780,10 @@ std::string NEAT::NodeGene_t::getLabel() const
 NEAT::ConnectionGene_t::ConnectionGene_t(int in, int out, double weight)
 	: m_in_index(in), m_out_index(out), m_weight(weight), m_enabled(true)
 {
+	if (m_weight > weight_cap)
+		m_weight = weight_cap;
+	else if (m_weight < -weight_cap)
+		m_weight = -weight_cap;
 	//reserve this innovation number, and increment to the next
 	m_innovation_number = g_nextInnovationNumber++;
 }
@@ -764,12 +796,20 @@ NEAT::ConnectionGene_t::ConnectionGene_t(const ConnectionGene_t & c)
 	  m_innovation_number(c.m_innovation_number),
 	  m_recurrent(false)
 {
+	if (m_weight > weight_cap)
+		m_weight = weight_cap;
+	else if (m_weight < -weight_cap)
+		m_weight = -weight_cap;
 	// we transfer the innovation number. This is a true copy, not a clone
 }
 
 void NEAT::ConnectionGene_t::setWeight(double weight)
 {
 	m_weight = weight;
+	if (m_weight > weight_cap)
+		m_weight = weight_cap;
+	else if (m_weight < -weight_cap)
+		m_weight = -weight_cap;
 }
 
 bool NEAT::ConnectionGene_t::isEquivalentConnection(const ConnectionGene_t & c) const
