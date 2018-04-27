@@ -24,7 +24,7 @@ namespace NEAT {
 		int getInnovationNumber() const { return m_innovation_number; }
 		bool isRecurrent() const { return m_recurrent; }
 
-		void setWeight(double weight) { m_weight = weight; }
+		void setWeight(double weight);
 		void enable() { m_enabled = true; }
 		void disable() { m_enabled = false; }
 		void setRecurrent(bool recurrent) { m_recurrent = recurrent; }
