@@ -24,6 +24,8 @@ public:
 	// if A is connected to B and B is connected to C, show a direct, weighted connection from A to C
 	SparseMatrix_t<T> fullyExpand() const;
 	size_t size() const { return m_elems.size(); }
+	size_t rowCount() const { return m_rows; }
+	size_t colCount() const { return m_cols; }
 	bool empty() const { return m_elems.empty(); }
 	bool isEqual(const SparseMatrix_t<T>& m) const;
 
