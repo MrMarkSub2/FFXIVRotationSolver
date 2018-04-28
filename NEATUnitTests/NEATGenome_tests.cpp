@@ -230,7 +230,7 @@ namespace NEATUnitTests
 			NEAT::Genome_t g2(g1);
 			g2.addConnectionGene(out_num, out_num, 20.0);
 			g2.updateConnectionGene(in_num, out_num, 5.5);
-			AssertIsEssentiallyEqual(5.5, g1.delta(g2), L"Okay, now my delta math is way off for g2...");
+			AssertIsEssentiallyEqual(1.0 * 1/2 + 0.4 * 4.5, g1.delta(g2), L"Okay, now my delta math is way off for g2...");
 			// unless I muck around with the globals, a delta of 5.5 should still fall within the same species
 			pop.addToCorrectSpecies(g2, representatives);
 			Assert::AreEqual(1, (int)pop.getSpeciesIds().size(), L"g2 didn't land in the same species... is NEAT::Population_t::starting_delta_t == 6?");
@@ -242,7 +242,8 @@ namespace NEATUnitTests
 				int new_num = g3.addNodeGene(NEAT::HIDDEN_NODE, "BLOAT BLOAT BLOAT");
 				g3.addConnectionGene(in_num, new_num, 5.0);
 			}
-			AssertIsEssentiallyEqual(19.0 / 3.0, g1.delta(g3), L"Okay, now my delta math is way off for g3...");
+			g3.updateConnectionGene(in_num, out_num, 6.5);
+			AssertIsEssentiallyEqual(1.0 * 11 / 12 + 0.4 * 5.5, g1.delta(g3), L"Okay, now my delta math is way off for g3...");
 			pop.addToCorrectSpecies(g3, representatives);
 			Assert::AreEqual(2, (int)pop.getSpeciesIds().size(), L"g3 should have diverged");
 			Assert::AreEqual(2, (int)representatives.size(), L"g3 forgot to update representatives");
@@ -251,8 +252,8 @@ namespace NEATUnitTests
 			// create a genome that is divergent due to weights
 			NEAT::Genome_t g4(g1);
 			g4.updateConnectionGene(in_num, out_num, 999.0);
-			AssertIsEssentiallyEqual(998.0, g1.delta(g4), L"Okay, now my delta math is way off for g4...");
-			AssertIsEssentiallyEqual(993.5 + 11.0 / 6.0, g3.delta(g4), L"Okay, now my delta math is way off for g4 part 2...");
+			AssertIsEssentiallyEqual(0.4 * 998.0, g1.delta(g4), L"Okay, now my delta math is way off for g4...");
+			AssertIsEssentiallyEqual(0.4*992.5 + 1.0 * 11/12, g3.delta(g4), L"Okay, now my delta math is way off for g4 part 2...");
 			pop.addToCorrectSpecies(g4, representatives);
 			Assert::AreEqual(3, (int)pop.getSpeciesIds().size(), L"g4 should have diverged");
 			Assert::AreEqual(3, (int)representatives.size(), L"g4 forgot to update representatives");
@@ -389,12 +390,12 @@ namespace NEATUnitTests
 			g2.addConnectionGene(2, 4, 0.4);
 			g2.addConnectionGene(0, 5, 0.5);
 
-			AssertIsEssentiallyEqual(1.3, g1.delta(g2), L"g1.delta(g2)");
-			AssertIsEssentiallyEqual(1.3, g2.delta(g1), L"g2.delta(g1)");
+			AssertIsEssentiallyEqual(1.0 * 5 / 10 + 0.4 * 1.5 / 5, g1.delta(g2), L"g1.delta(g2)");
+			AssertIsEssentiallyEqual(1.0 * 5 / 10 + 0.4 * 1.5 / 5, g2.delta(g1), L"g2.delta(g1)");
 
 			NEAT::Genome_t g3(g1.makeOffspring(g2));
-			AssertIsNotEssentiallyEqual(1.3, g3.delta(g1), L"g3.delta(g1)");
-			AssertIsNotEssentiallyEqual(1.3, g3.delta(g2), L"g3.delta(g2)");
+			AssertIsNotEssentiallyEqual(1.0 * 5 / 10 + 0.4 * 1.5 / 5, g3.delta(g1), L"g3.delta(g1)");
+			AssertIsNotEssentiallyEqual(1.0 * 5 / 10 + 0.4 * 1.5 / 5, g3.delta(g2), L"g3.delta(g2)");
 		}
 
 		TEST_METHOD(DeltaTest) {
@@ -425,8 +426,8 @@ namespace NEATUnitTests
 			g2.addConnectionGene(2, 4, 0.4);
 			g2.addConnectionGene(0, 5, 0.5);
 
-			AssertIsEssentiallyEqual(1.3, g1.delta(g2), L"g1.delta(g2)");
-			AssertIsEssentiallyEqual(1.3, g2.delta(g1), L"g2.delta(g1)");
+			AssertIsEssentiallyEqual(1.0 * 5/10 + 0.4 * 1.5/5, g1.delta(g2), L"g1.delta(g2)");
+			AssertIsEssentiallyEqual(1.0 * 5/10 + 0.4 * 1.5/5, g2.delta(g1), L"g2.delta(g1)");
 		}
 
 

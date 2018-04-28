@@ -41,7 +41,7 @@ namespace NEAT {
 		bool m_recurrent;
 
 		static int g_nextInnovationNumber;
-		const static double weight_cap;
+		//const static double weight_cap;
 	};
 
 	enum NODETYPE {

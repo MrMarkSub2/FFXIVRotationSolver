@@ -17,6 +17,7 @@ public:
 	ROTATION_SOLVER_API ~xorSolver_t();
 
 	int ROTATION_SOLVER_API getGeneration() const;
+	std::vector<double> evaluate(const NEAT::Genome_t& g, std::vector<double> input) const;
 	void ROTATION_SOLVER_API evaluateGeneration();
 	const NEAT::Genome_t ROTATION_SOLVER_API & getBestOfGeneration() const;
 	void ROTATION_SOLVER_API nextGeneration();

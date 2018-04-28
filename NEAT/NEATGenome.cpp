@@ -7,12 +7,12 @@
 int NEAT::ConnectionGene_t::g_nextInnovationNumber = 0;
 int NEAT::Population_t::g_nextSpeciesNumber = 0;
 
-const double NEAT::ConnectionGene_t::weight_cap = 500.0;
+//const double NEAT::ConnectionGene_t::weight_cap = 500.0;
 
 // all of these constants are from the NEAT paper and/or FAQ
-const double NEAT::Genome_t::delta_c1 = 2.0;
-const double NEAT::Genome_t::delta_c2 = 2.0;
-const double NEAT::Genome_t::delta_c3 = 1.0;
+const double NEAT::Genome_t::delta_c1 = 1.0; // 2.0;
+const double NEAT::Genome_t::delta_c2 = 1.0; // 2.0;
+const double NEAT::Genome_t::delta_c3 = 0.4; // 1.0;
 
 const double NEAT::Genome_t::mutate_without_crossover_rate = 0.25;
 const double NEAT::Genome_t::disable_gene_rate = 0.75;
@@ -21,10 +21,10 @@ const double NEAT::Genome_t::generate_new_connection_weight = 0.1;
 const double NEAT::Genome_t::mutate_add_connection = 0.05; // 0.3;
 const double NEAT::Genome_t::mutate_add_node = 0.03; //0.05
 
-const double NEAT::Population_t::starting_delta_t = 6.0;
-const double NEAT::Population_t::delta_t_step = 0.3;// 0.3;
-const int NEAT::Population_t::genome_count = 150; // 500; //150 // seems small for my complexity, consider 200-500... depends on how fast the fitness function is
-const int NEAT::Population_t::target_species_count = 15; //50; //15 // probably needs experimentation
+const double NEAT::Population_t::starting_delta_t = 3.0; // 6.0;
+const double NEAT::Population_t::delta_t_step = 0.0; // 0.3;
+const int NEAT::Population_t::genome_count = 150; // seems small for my complexity, consider 200-500... depends on how fast the fitness function is
+const int NEAT::Population_t::target_species_count = 15; // probably needs experimentation
 const double NEAT::Population_t::breeding_percentile = 0.2; // weaker genomes don't get to reproduce. Percentile applied to each species separately
 const int NEAT::Population_t::species_stagnation_limit = 15; // start to choke it off, it's an evolutionary dead-end
 const int NEAT::Population_t::min_species_size = 5; // don't let us have species with just 1 or 2 genomes
@@ -32,6 +32,8 @@ const double NEAT::Population_t::interspecies_mating_rate = 0.001; // very tiny 
 
 namespace {
 	std::map<std::pair<int, int>, NEAT::ConnectionGene_t> g_all_connections;
+
+	const double normalized_stdev = 1.0;
 }
 
 struct NEAT::Population_t::Impl {
@@ -86,8 +88,8 @@ void NEAT::Population_t::Impl::registerHighestFitness(int species, double fitnes
 		}
 		else {
 			++it->second.m_stale_generations;
-			if (it->second.m_stale_generations >= 12)
-				std::cout << "\tStale  : " << species << " (" << it->second.m_stale_generations << ")" << std::endl;
+			//if (it->second.m_stale_generations >= 12)
+			//	std::cout << "\tStale  : " << species << " (" << it->second.m_stale_generations << ")" << std::endl;
 		}
 	}
 }
@@ -289,14 +291,15 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 		int fittestGenomeId = getFittestGenomeIdofSpecies(speciesId);
 		double highestSpeciesFitness = getGenome(fittestGenomeId).getFitness();
 		pimpl->registerHighestFitness(speciesId, highestSpeciesFitness);
-		std::cout << "\tSpecies: " << speciesId << "\tGenomes: " << current_genome_list_size << "\tFitness: " << highestSpeciesFitness << std::endl;
+		std::cout << "\tSpec: " << speciesId << " \tGeno: " << current_genome_list_size << " \tFit: " << highestSpeciesFitness
+			<< "   \tNode: " << getGenome(fittestGenomeId).Wxh().rowCount() << " \tConn: " << getGenome(fittestGenomeId).Wxh().size() << std::endl;
 
 		for (int g = 0; g < current_genome_list_size; ++g) {
 			// start calculation adjusted fitness... We'll use this later
 			// average + max... don't overreward outliers, but don't ignore awesome builds
 			adjusted_fitness_list[s] += pimpl->calculateAdjustedFitness(current_genome_list[g], speciesId);
 		}
-		adjusted_fitness_list[s] += pimpl->calculateAdjustedFitness(fittestGenomeId, speciesId) * current_genome_list_size;
+		//adjusted_fitness_list[s] += pimpl->calculateAdjustedFitness(fittestGenomeId, speciesId) * current_genome_list_size;
 
 		// randomly sample a single genome from each species
 		int randomId = current_genome_list[randInt(0, current_genome_list_size - 1)];
@@ -314,6 +317,8 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 	std::vector<int> speciesAllotment(speciesCnt, 0);
 	for (int s = 0; s < speciesCnt; ++s) {
 		int allotment = (int)round(adjusted_fitness_list[s] / total_adjusted_fitness * NEAT::Population_t::genome_count);
+		//if (allotment == 0)
+		//	allotment = 1;
 		speciesAllotment[s] = allotment;
 		nextPopSize += allotment;
 	}
@@ -356,7 +361,10 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 							//TODO: the way I'm doing this is biased toward small species
 							int randSpecies = randInt(0, speciesCnt - 1);
 							std::vector<int> randBreedingPool = getBestGenomeIdsOfSpecies(current_species_list[randSpecies], NEAT::Population_t::breeding_percentile);
-							id2 = randBreedingPool[randInt(0, (int)randBreedingPool.size() - 1)];
+							if (!randBreedingPool.empty())
+								id2 = randBreedingPool[randInt(0, (int)randBreedingPool.size() - 1)];
+							else
+								id2 = id1;
 						} while (id1 == id2);
 					}
 					else {
@@ -423,16 +431,16 @@ SparseMatrix_t<double> NEAT::Genome_t::Impl::W_helper(int min_size)
 void NEAT::Genome_t::Impl::mutateAllConnectionWeights()
 {
 	for (std::map<int, ConnectionGene_t>::iterator it = m_connection_genes.begin(); it != m_connection_genes.end(); ++it) {
-		if (randDouble() < Genome_t::mutate_all_connection_weights) {
+		//if (randDouble() < Genome_t::mutate_all_connection_weights) {
 			if (randDouble() < Genome_t::generate_new_connection_weight) {
 				// SET to new normalized random number
-				it->second.setWeight(getNormalizedRand());
+				it->second.setWeight(getNormalizedRand(0.0, normalized_stdev));
 			}
 			else {
 				// MODIFY by normalized random number
-				it->second.setWeight(it->second.getWeight() + getNormalizedRand());
+				it->second.setWeight(it->second.getWeight() + getNormalizedRand(0.0, normalized_stdev));
 			}
-		}
+		//}
 	}
 }
 
@@ -583,7 +591,10 @@ double NEAT::Genome_t::delta(const Genome_t & rhs) const
 
 	const size_t excess_cnt = excess_lhs.size() + excess_rhs.size();
 	const size_t disjoint_cnt = disjoint_lhs.size() + disjoint_rhs.size();
-	const size_t num = match.size() + max(disjoint_lhs.size() + excess_lhs.size(), disjoint_rhs.size() + excess_rhs.size());
+	size_t num = match.size() + max(disjoint_lhs.size() + excess_lhs.size(), disjoint_rhs.size() + excess_rhs.size());
+	//if (num < 10)
+		//num = 1;
+	
 
 	double weight_diff(0.0);
 	for (std::set<int>::const_iterator it = match.begin(); it != match.end(); ++it) {
@@ -721,13 +732,15 @@ NEAT::Genome_t NEAT::Genome_t::crossover(const Genome_t & rhs) const
 void NEAT::Genome_t::mutate()
 {
 	// should we modify the connection weights?
-	pimpl->mutateAllConnectionWeights();
+	if (randDouble() < Genome_t::mutate_all_connection_weights) {
+		pimpl->mutateAllConnectionWeights();
+	}
 
 	// should we add a brand new connection?
 	if (randDouble() < Genome_t::mutate_add_connection) {
 		std::pair<int, int> newConnectionPair = pimpl->findNewAddConnection();
 		if (newConnectionPair.first != -1)
-			addConnectionGene(newConnectionPair.first, newConnectionPair.second, getNormalizedRand());
+			addConnectionGene(newConnectionPair.first, newConnectionPair.second, getNormalizedRand(0.0, normalized_stdev));
 	}
 
 	//TODO: Consider a mutation that connects one input to EVERY output node. It's a good mutation to jump-start from gen #0
@@ -780,10 +793,10 @@ std::string NEAT::NodeGene_t::getLabel() const
 NEAT::ConnectionGene_t::ConnectionGene_t(int in, int out, double weight)
 	: m_in_index(in), m_out_index(out), m_weight(weight), m_enabled(true)
 {
-	if (m_weight > weight_cap)
-		m_weight = weight_cap;
-	else if (m_weight < -weight_cap)
-		m_weight = -weight_cap;
+	//if (m_weight > weight_cap)
+	//	m_weight = weight_cap;
+	//else if (m_weight < -weight_cap)
+	//	m_weight = -weight_cap;
 	//reserve this innovation number, and increment to the next
 	m_innovation_number = g_nextInnovationNumber++;
 }
@@ -796,20 +809,20 @@ NEAT::ConnectionGene_t::ConnectionGene_t(const ConnectionGene_t & c)
 	  m_innovation_number(c.m_innovation_number),
 	  m_recurrent(false)
 {
-	if (m_weight > weight_cap)
-		m_weight = weight_cap;
-	else if (m_weight < -weight_cap)
-		m_weight = -weight_cap;
+	//if (m_weight > weight_cap)
+	//	m_weight = weight_cap;
+	//else if (m_weight < -weight_cap)
+	//	m_weight = -weight_cap;
 	// we transfer the innovation number. This is a true copy, not a clone
 }
 
 void NEAT::ConnectionGene_t::setWeight(double weight)
 {
 	m_weight = weight;
-	if (m_weight > weight_cap)
-		m_weight = weight_cap;
-	else if (m_weight < -weight_cap)
-		m_weight = -weight_cap;
+	//if (m_weight > weight_cap)
+	//	m_weight = weight_cap;
+	//else if (m_weight < -weight_cap)
+	//	m_weight = -weight_cap;
 }
 
 bool NEAT::ConnectionGene_t::isEquivalentConnection(const ConnectionGene_t & c) const

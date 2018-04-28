@@ -46,13 +46,17 @@ void xorSolver_t::Impl::performOnePass(std::vector<double>& state, std::vector<d
 	state_prev = state;
 
 	for (int i = 0; i < state.size(); ++i) {
-		state[i] = NEAT::ReLU(curr_w[i] + prev_w[i]);
+		state[i] = tanh(curr_w[i] + prev_w[i]);
 	}
 }
 
 std::vector<double> xorSolver_t::Impl::getOutput(const std::vector<double>& state, const SparseMatrix_t<double>& output_w)
 {
-	return NEAT::softmax(output_w.mult(state));
+	std::vector<double> output;
+	output.push_back(1 / (1 + exp(-4.9*state[3])));
+	//output.push_back(state[3]);
+	//return NEAT::softmax(output);
+	return output;
 }
 
 xorSolver_t::xorSolver_t()
@@ -68,6 +72,46 @@ int xorSolver_t::getGeneration() const
 	return pimpl->m_neat.getGeneration();
 }
 
+std::vector<double> xorSolver_t::evaluate(const NEAT::Genome_t & g, std::vector<double> input) const
+{
+	SparseMatrix_t<double> Wxh = g.Wxh();
+	SparseMatrix_t<double> Whh = g.Whh();
+
+	// these are guaranteed to be square matrices
+	int matrix_size = (int)Wxh.rowCount();
+
+	SparseMatrix_t<double> output_w(matrix_size, matrix_size);
+	output_w.addElem(1.0, 3, 3);
+
+	// construct state vector
+	std::vector<double> state(matrix_size, 0.0);
+	std::vector<double> state_prev(matrix_size, 0.0);
+
+	double settled;
+	int loopCnt = 0;
+	do {
+		//TODO
+		//if (loopCnt == 0) {
+			state[0] += input[0];
+			state[1] += input[1];
+			state[2] = 1; // bias
+		//}
+
+		pimpl->performOnePass(state, state_prev, Wxh, Whh);
+
+		settled = 0.0;
+		for (int i = 3; i < state.size(); ++i) {
+			settled += abs(state[i] - state_prev[i]);
+		}
+
+		/*if (isinf(settled) || settled > 1000000000 || settled < -1000000000)
+		int foo;*/
+
+	} while (++loopCnt < 20 && settled > 0.1);
+
+	return pimpl->getOutput(state, output_w);
+}
+
 void xorSolver_t::evaluateGeneration()
 {
 	std::vector<int> test_cases = { 0, 1, 2, 3 };
@@ -76,46 +120,16 @@ void xorSolver_t::evaluateGeneration()
 		std::random_shuffle(test_cases.begin(), test_cases.end());
 		
 		const NEAT::Genome_t& genome = pimpl->m_neat.getGenome(g);
-		SparseMatrix_t<double> Wxh = genome.Wxh();
-		SparseMatrix_t<double> Whh = genome.Whh();
-
-		// these are guaranteed to be square matrices
-		int matrix_size = (int)Wxh.rowCount();
-
-		SparseMatrix_t<double> output_w(matrix_size, matrix_size);
-		output_w.addElem(1.0, 3, 3);
 
 		double fitness = 4.0;
 
 		for (int t = 0; t < test_cases.size(); ++t) {
-			// construct state vector
-			std::vector<double> state(matrix_size, 0.0);
-			std::vector<double> state_prev(matrix_size, 0.0);
-
+			std::vector<double> input = { (double)((test_cases[t] & 0x2) >> 1), (double)(test_cases[t] & 0x1) };
 			double answer = ((test_cases[t] & 0x2) >> 1) ^ (test_cases[t] & 0x1);
 
-			double settled;
-			int loopCnt = 0;
-			do {
-				state[0] += (test_cases[t] & 0x2) >> 1;
-				state[1] += test_cases[t] & 0x1;
-				state[2] = 1; // bias
-
-				pimpl->performOnePass(state, state_prev, Wxh, Whh);
-	
-				settled = 0.0;
-				for (int i = 3; i < state.size(); ++i) {
-					settled += abs(state[i] - state_prev[i]);
-				}
-
-				/*if (isinf(settled) || settled > 1000000000 || settled < -1000000000)
-					int foo;*/
-					
-			} while (++loopCnt < 20 && settled > 0.1);
-
-			std::vector<double> output = pimpl->getOutput(state, output_w);
+			std::vector<double> output = evaluate(genome, input);
 			//fitness -= abs(answer - output[3]) * abs(answer - output[3]);
-			fitness -= abs(answer - output[3]);
+			fitness -= abs(answer - output[0]);
 		}
 
 		//pimpl->m_neat.setFitness(g, fitness);
