@@ -41,7 +41,10 @@ int NEAT::randInt(int min, int max) {
 
 double NEAT::ReLU(double x)
 {
+	//return 1.0 / (1 + exp(-4.9*x));
+	//return 1.0 / (1 + exp(-x));
 	return max(0, x);
+	//return tanh(x);
 }
 
 std::vector<double> NEAT::softmax(std::vector<double> v)
@@ -63,7 +66,8 @@ std::vector<double> NEAT::softmax(std::vector<double> v)
 	});
 
 	// finally, divide each value e^x / sum(e^x)
-	std::transform(v.begin(), v.end(), v.begin(), [=](double x) { return x / v_sum; });
+	if (/*v_sum != 0 && */!isnan(v_sum) && !isinf(v_sum))
+		std::transform(v.begin(), v.end(), v.begin(), [=](double x) { return x / v_sum; });
 
 	return v;
 }
