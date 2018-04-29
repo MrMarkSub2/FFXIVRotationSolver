@@ -2,12 +2,11 @@
 //
 
 #include "stdafx.h"
+#include "NEATGenome.h"
+#include "rdm.h"
 #include "xor.h"
 #include <iostream>
 #include <iomanip>
-//#include <string>
-#include "NEATGenome.h"
-//#include "../NEAT/utils.h"
 
 /*MoveString_t createMovestringMeleeFinisher() {
     MoveString_t movestring;
@@ -60,19 +59,15 @@
 //	}
 //}
 
-int main()
-{
-	//for (int i = 0; i < 1000; ++i)
-	//	std::cout << NEAT::getNormalizedRand(0.0, 1.0) << std::endl;
+void runXORSolver() {
 	xorSolver_t xSolve;
 	for (int i = 0; i < 1000; ++i) {
 		xSolve.evaluateGeneration();
 		NEAT::Genome_t bestG = xSolve.getBestOfGeneration();
 		std::cout << "Generation: " << xSolve.getGeneration() << "   Fitness: " << bestG.getFitness() << "   Nodes: " << bestG.Wxh().rowCount() << "   Connect: " << bestG.Wxh().size() << std::endl;
-		//TODO: Function to evaluate bestG to see if it passes all 4, break
 		//for (int j = 0; j < bestG.Wxh().m_elems.size(); ++j)
 		//	std::cout << "\t(" << bestG.Wxh().m_elems[j].col << "," << bestG.Wxh().m_elems[j].row << ") = " << bestG.Wxh().m_elems[j].val << std::endl;
-		
+
 		int successes = 0;
 		for (int t = 0; t < 4; ++t) {
 			std::vector<double> input = { (double)((t & 0x2) >> 1), (double)(t & 0x1) };
@@ -89,9 +84,32 @@ int main()
 			std::cout << "\tSUCCESS!" << std::endl;
 			break;
 		}
-		
+
 		xSolve.nextGeneration();
 	}
+}
+
+void runRDMSolver() {
+	MoveStates_t opener = getMinimalisticOpener();
+	RDMSolver_t RDMSolve;
+
+	for (int i = 0; i < 1000; ++i) {
+		RDMSolve.evaluateGeneration(opener);
+		NEAT::Genome_t bestG = RDMSolve.getBestOfGeneration();
+		MoveStates_t output = RDMSolve.evaluate(bestG, opener);
+		output.print(std::cout, MoveStates_t::MS_PRINT_DPS, '\t');
+		std::cout << "Species Count: " << RDMSolve.getSpeciesCount() << std::endl;
+		std::cout << "Gen: " << RDMSolve.getGeneration() << "   DPS: " << output.constLastState().getDPS().calc() << "   Nodes: " << bestG.Wxh().rowCount() << "   Connect: " << bestG.Wxh().size() << std::endl;
+		//for (int j = 0; j < bestG.Wxh().m_elems.size(); ++j)
+		//	std::cout << "\t(" << bestG.Wxh().m_elems[j].col << "," << bestG.Wxh().m_elems[j].row << ") = " << bestG.Wxh().m_elems[j].val << std::endl;
+
+		RDMSolve.nextGeneration();
+	}
+}
+
+int main()
+{
+	runRDMSolver();
 
 	return 0;
 

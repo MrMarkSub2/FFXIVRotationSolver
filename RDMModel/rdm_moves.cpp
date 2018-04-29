@@ -117,6 +117,20 @@ MoveStates_t & MoveStates_t::operator=(const MoveStates_t& ms)
 }
 MoveStates_t::~MoveStates_t() { delete pimpl; }
 
+State_t::UseActionRval_t MoveStates_t::tryToAddMove(std::shared_ptr<Move_t> move)
+{
+	State_t::UseActionRval_t rval = State_t::UA_NOT_USEABLE;
+	if (!isFinished()) {
+		rval = pimpl->m_last_state.UseAction(move);
+		if (rval != State_t::UA_NOT_USEABLE) {
+			pimpl->m_moves.push_back(make_pair(move, pimpl->m_last_state));
+			pimpl->m_last_move = move;
+		}
+	}
+
+	return rval;
+}
+
 MoveStates_t& MoveStates_t::advanceAndAddMove(std::shared_ptr<Move_t> move) {
     while (!isFinished() && pimpl->m_last_state.UseAction(move) == State_t::UA_NOT_USEABLE)
         pimpl->m_last_state.AdvanceTimeByMilliseconds(10);

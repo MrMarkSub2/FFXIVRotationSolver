@@ -145,7 +145,7 @@ const NEAT::Genome_t & xorSolver_t::getBestOfGeneration() const
 	return pimpl->m_neat.getGenome(pimpl->m_best_of_generation_id);
 }
 
-void ROTATION_SOLVER_API xorSolver_t::nextGeneration()
+void xorSolver_t::nextGeneration()
 {
 	pimpl->m_neat = pimpl->m_neat.createNextGeneration();
 	pimpl->m_best_of_generation_id = -1;

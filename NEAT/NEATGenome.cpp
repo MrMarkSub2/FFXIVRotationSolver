@@ -18,13 +18,13 @@ const double NEAT::Genome_t::mutate_without_crossover_rate = 0.25;
 const double NEAT::Genome_t::disable_gene_rate = 0.75;
 const double NEAT::Genome_t::mutate_all_connection_weights = 0.8;
 const double NEAT::Genome_t::generate_new_connection_weight = 0.1;
-const double NEAT::Genome_t::mutate_add_connection = 0.05; // 0.3;
-const double NEAT::Genome_t::mutate_add_node = 0.03; //0.05
+const double NEAT::Genome_t::mutate_add_connection = 0.3; // 0.05;
+const double NEAT::Genome_t::mutate_add_node = 0.05; //0.03
 
 const double NEAT::Population_t::starting_delta_t = 3.0; // 6.0;
 const double NEAT::Population_t::delta_t_step = 0.0; // 0.3;
-const int NEAT::Population_t::genome_count = 150; // seems small for my complexity, consider 200-500... depends on how fast the fitness function is
-const int NEAT::Population_t::target_species_count = 15; // probably needs experimentation
+const int NEAT::Population_t::genome_count = 300; // 150; // seems small for my complexity, consider 200-500... depends on how fast the fitness function is
+const int NEAT::Population_t::target_species_count = 20; // probably needs experimentation
 const double NEAT::Population_t::breeding_percentile = 0.2; // weaker genomes don't get to reproduce. Percentile applied to each species separately
 const int NEAT::Population_t::species_stagnation_limit = 15; // start to choke it off, it's an evolutionary dead-end
 const int NEAT::Population_t::min_species_size = 5; // don't let us have species with just 1 or 2 genomes
@@ -291,8 +291,8 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 		int fittestGenomeId = getFittestGenomeIdofSpecies(speciesId);
 		double highestSpeciesFitness = getGenome(fittestGenomeId).getFitness();
 		pimpl->registerHighestFitness(speciesId, highestSpeciesFitness);
-		std::cout << "\tSpec: " << speciesId << " \tGeno: " << current_genome_list_size << " \tFit: " << highestSpeciesFitness
-			<< "   \tNode: " << getGenome(fittestGenomeId).Wxh().rowCount() << " \tConn: " << getGenome(fittestGenomeId).Wxh().size() << std::endl;
+		//std::cout << "\tSpec: " << speciesId << " \tGeno: " << current_genome_list_size << " \tFit: " << highestSpeciesFitness
+		//	<< "   \tNode: " << getGenome(fittestGenomeId).Wxh().rowCount() << " \tConn: " << getGenome(fittestGenomeId).Wxh().size() << std::endl;
 
 		for (int g = 0; g < current_genome_list_size; ++g) {
 			// start calculation adjusted fitness... We'll use this later

@@ -10,6 +10,9 @@
     <ClCompile Include="xor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="rdm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -19,6 +22,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="xor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rdm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
