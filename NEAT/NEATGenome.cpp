@@ -22,7 +22,7 @@ const double NEAT::Genome_t::mutate_add_connection = 0.3; // 0.05;
 const double NEAT::Genome_t::mutate_add_node = 0.05; //0.03
 
 const double NEAT::Population_t::starting_delta_t = 3.0; // 6.0;
-const double NEAT::Population_t::delta_t_step = 0.0; // 0.3;
+const double NEAT::Population_t::delta_t_step = 0.9;
 const int NEAT::Population_t::genome_count = 300; // 150; // seems small for my complexity, consider 200-500... depends on how fast the fitness function is
 const int NEAT::Population_t::target_species_count = 20; // probably needs experimentation
 const double NEAT::Population_t::breeding_percentile = 0.2; // weaker genomes don't get to reproduce. Percentile applied to each species separately
@@ -266,14 +266,11 @@ NEAT::Population_t NEAT::Population_t::createNextGeneration()
 	// set species delta. This is adjusted up or down to guide the next population toward a desired number of species
 	nextPop.pimpl->delta_t = pimpl->delta_t;
 	if (nextPop.getGeneration() > 1) {
+		// shrink delta_t proportionally if we don't have enough species; enforce that we don't inevitably reduce down to 1 species
+		// experimentally, I don't find much value in growing delta_t. The delta function from the NEAT paper inherently reduces 
+		//   toward zero as the genome gets bigger
 		if (speciesCnt < NEAT::Population_t::target_species_count)
-			nextPop.pimpl->delta_t -= NEAT::Population_t::delta_t_step;
-		else if (speciesCnt > NEAT::Population_t::target_species_count)
-			nextPop.pimpl->delta_t += NEAT::Population_t::delta_t_step;
-
-		// make sure we didn't accidentally force the delta too close to 0
-		if (nextPop.pimpl->delta_t < NEAT::Population_t::delta_t_step)
-			nextPop.pimpl->delta_t = NEAT::Population_t::delta_t_step;
+			nextPop.pimpl->delta_t *= NEAT::Population_t::delta_t_step;
 	}
 	
 	std::vector<double> adjusted_fitness_list(speciesCnt, 0.0);
