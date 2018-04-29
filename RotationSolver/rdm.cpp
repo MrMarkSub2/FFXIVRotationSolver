@@ -180,10 +180,60 @@ std::vector<double> RDMSolver_t::Impl::getInputArray(const MoveStates_t & movest
 	std::vector<double> rval(RDM_INPUT_END + 1, 0.0);
 	const State_t& state = movestates.constLastState();
 
+	rval[RDM_INPUT_WHITE_MANA] = (double)state.m_mana.white() / 100.0; // turning this into a float might not work for the neural network
+	rval[RDM_INPUT_BLACK_MANA] = (double)state.m_mana.black() / 100.0; // turning this into a float might not work for the neural network
 
+	rval[RDM_INPUT_REMAIN_GCD] = (double)state.m_caststate.m_gcd / state.m_statics.m_gcd;
+	rval[RDM_INPUT_REMAIN_CASTING] = (double)state.m_caststate.m_casting / state.m_statics.m_gcd;
+	rval[RDM_INPUT_REMAIN_ANI_LOCK] = (double)state.m_caststate.m_animation_lock / state.m_statics.m_gcd;
+	rval[RDM_INPUT_REMAIN_OUT_OF_RANGE] = (double)state.m_caststate.m_out_of_range / state.m_statics.m_gcd;
 
+	rval[RDM_INPUT_STATUS_DUALCAST] = (double)state.m_status.m_dualcast / (15 * 1000);
+	rval[RDM_INPUT_STATUS_IMPACT] = (double)state.m_status.m_impactful / (30 * 1000);
+	rval[RDM_INPUT_STATUS_VERSTONE] = (double)state.m_status.m_verstone / (30 * 1000);
+	rval[RDM_INPUT_STATUS_VERFIRE] = (double)state.m_status.m_verfire / (30 * 1000);
+	rval[RDM_INPUT_STATUS_SCATTER] = (double)state.m_status.m_scatter / (10 * 1000);
+	rval[RDM_INPUT_STATUS_ACCEL] = (double)state.m_status.m_acceleration / (10 * 1000);
+	rval[RDM_INPUT_STATUS_EMBOLDEN] = (double)state.m_status.m_embolden / (20 * 1000);
+	rval[RDM_INPUT_STATUS_SWIFTCAST] = (double)state.m_status.m_swiftcast / (10 * 1000);
+	rval[RDM_INPUT_STATUS_INFUSION] = (double)state.m_status.m_infusion / (30 * 1000);
+
+	rval[RDM_INPUT_RECAST_CORPS] = (double)state.m_recast.m_corps / (40 * 1000);
+	rval[RDM_INPUT_RECAST_DISPLACE] = (double)state.m_recast.m_displacement / (35 * 1000);
+	rval[RDM_INPUT_RECAST_ACCEL] = (double)state.m_recast.m_acceleration / (35 * 1000);
+	rval[RDM_INPUT_RECAST_MANIFICATION] = (double)state.m_recast.m_manification / (120 * 1000);
+	rval[RDM_INPUT_RECAST_EMBOLDEN] = (double)state.m_recast.m_embolden / (120 * 1000);
+	rval[RDM_INPUT_RECAST_SWIFTCAST] = (double)state.m_recast.m_swiftcast / (60 * 1000);
+	rval[RDM_INPUT_RECAST_FLECHE] = (double)state.m_recast.m_fleche / (25 * 1000);
+	rval[RDM_INPUT_RECAST_CONTRE] = (double)state.m_recast.m_contre / (45 * 1000);
+	rval[RDM_INPUT_RECAST_INFUSION] = (double)state.m_recast.m_infusion / (4.5 * 60 * 1000);
+
+	switch (state.m_melee_combo) {
+	case State_t::MELEE_RIPOSTE:
+		rval[RDM_INPUT_MELEE_RIPOSTE] = 1.0;
+		break;
+	case State_t::MELEE_ZWER:
+		rval[RDM_INPUT_MELEE_ZWER] = 1.0;
+		break;
+	case State_t::MELEE_REDOUBLEMENT:
+		rval[RDM_INPUT_MELEE_REDOUBLEMENT] = 1.0;
+		break;
+	case State_t::MELEE_FINISHER:
+		rval[RDM_INPUT_MELEE_FINISHER] = 1.0;
+		break;
+	}
 
 	return rval;
+}
+
+int RDMSolver_t::Impl::getOutput(const std::vector<double>& state)
+{
+	//TODO
+	return RDM_OUTPUT_JOLT2;
+}
+
+void RDMSolver_t::Impl::performOnePass(std::vector<double>& state, std::vector<double>& state_prev, const SparseMatrix_t<double>& Wxh, const SparseMatrix_t<double>& Whh) {
+	//TODO
 }
 
 RDMSolver_t::RDMSolver_t()
@@ -232,9 +282,9 @@ MoveStates_t RDMSolver_t::evaluate(const NEAT::Genome_t & g, const MoveStates_t 
 		int nextMoveId = pimpl->getOutput(state);
 		std::shared_ptr<Move_t> nextMove = pimpl->m_moves[nextMoveId];
 
-		if (movestates.addMove(nextMove) != State_t::UA_NOT_USEABLE) {
+		//if (movestates.addMove(nextMove) != State_t::UA_NOT_USEABLE) {
 			// I guess I don't HAVE to check this?
-		}
+		//}
 
 		movestates.advance(10);
 	} while (!movestates.isFinished());
@@ -244,6 +294,7 @@ MoveStates_t RDMSolver_t::evaluate(const NEAT::Genome_t & g, const MoveStates_t 
 
 void RDMSolver_t::evaluateGeneration(const MoveStates_t& opener)
 {
+	double progress = 0.0;
 	for (int g = 0; g < pimpl->m_neat.size(); ++g) {
 		const NEAT::Genome_t& genome = pimpl->m_neat.getGenome(g);
 
@@ -252,7 +303,13 @@ void RDMSolver_t::evaluateGeneration(const MoveStates_t& opener)
 
 		//pimpl->m_neat.setFitness(g, fitness);
 		pimpl->m_neat.setFitness(g, fitness*fitness);
+
+		//std::cout << "\tEvaluated genome #" << g << std::endl;
+		progress += (1.0 / pimpl->m_neat.size());
+		int stars = progress * 20;
+		std::cout << "\r\tProgress: [" << std::string(stars, '*') << std::string(20 - stars, ' ') << "] " << (int)(100 * progress) << "%";
 	}
+	std::cout << std::endl;
 }
 
 const NEAT::Genome_t& RDMSolver_t::getBestOfGeneration() const
