@@ -2,6 +2,7 @@
 #include "NEATGenome.h"
 #include "SparseMatrix.h"
 #include "rdm.h"
+#include "rdm_moves.h"
 #include <iostream>
 
 enum RDM_INDEX {
@@ -162,6 +163,40 @@ void RDMSolver_t::Impl::initialize()
 
 	std::cout << "Node count: " << no_connect_genome.Whh().rowCount() << std::endl;
 
+	m_moves[RDM_OUTPUT_JOLT2] = std::shared_ptr<Move_t>(new Jolt2_t());
+	m_moves[RDM_OUTPUT_IMPACT] = std::shared_ptr<Move_t>(new Impact_t());
+	m_moves[RDM_OUTPUT_VERTHUNDER] = std::shared_ptr<Move_t>(new Verthunder_t());
+	m_moves[RDM_OUTPUT_VERAERO] = std::shared_ptr<Move_t>(new Veraero_t());
+	m_moves[RDM_OUTPUT_VERFIRE] = std::shared_ptr<Move_t>(new Verfire_t());
+	m_moves[RDM_OUTPUT_VERSTONE] = std::shared_ptr<Move_t>(new Verstone_t());
+	m_moves[RDM_OUTPUT_VERFLARE] = std::shared_ptr<Move_t>(new Verflare_t());
+	m_moves[RDM_OUTPUT_VERHOLY] = std::shared_ptr<Move_t>(new Verholy_t());
+
+	m_moves[RDM_OUTPUT_CORPS] = std::shared_ptr<Move_t>(new Corps_t());
+	m_moves[RDM_OUTPUT_DISPLACEMENT] = std::shared_ptr<Move_t>(new Displacement_t());
+
+	m_moves[RDM_OUTPUT_ACCEL] = std::shared_ptr<Move_t>(new Acceleration_t());
+	m_moves[RDM_OUTPUT_MANIFICATION] = std::shared_ptr<Move_t>(new Manification_t());
+	m_moves[RDM_OUTPUT_EMBOLDEN] = std::shared_ptr<Move_t>(new Embolden_t());
+	m_moves[RDM_OUTPUT_SWIFTCAST] = std::shared_ptr<Move_t>(new Swiftcast_t());
+	m_moves[RDM_OUTPUT_INFUSION] = std::shared_ptr<Move_t>(new Infusion_t());
+
+	m_moves[RDM_OUTPUT_FLECHE] = std::shared_ptr<Move_t>(new Fleche_t());
+	m_moves[RDM_OUTPUT_CONTRE] = std::shared_ptr<Move_t>(new Contre_t());
+
+	m_moves[RDM_OUTPUT_RIPOSTE] = std::shared_ptr<Move_t>(new Riposte_t());
+	m_moves[RDM_OUTPUT_ENHRIPOSTE] = std::shared_ptr<Move_t>(new EnhRiposte_t());
+	m_moves[RDM_OUTPUT_ZWER] = std::shared_ptr<Move_t>(new Zwerchhau_t());
+	m_moves[RDM_OUTPUT_ENHZWER] = std::shared_ptr<Move_t>(new EnhZwerchhau_t());
+	m_moves[RDM_OUTPUT_REDOUBLEMENT] = std::shared_ptr<Move_t>(new Redoublement_t());
+	m_moves[RDM_OUTPUT_ENHREDOUBLEMENT] = std::shared_ptr<Move_t>(new EnhRedoublement_t());
+	m_moves[RDM_OUTPUT_SCATTER] = std::shared_ptr<Move_t>(new Scatter_t());
+	m_moves[RDM_OUTPUT_ENHSCATTER] = std::shared_ptr<Move_t>(new EnhScatter_t());
+	m_moves[RDM_OUTPUT_MOULINET] = std::shared_ptr<Move_t>(new Moulinet_t());
+	m_moves[RDM_OUTPUT_ENHMOULINET] = std::shared_ptr<Move_t>(new EnhMoulinet_t());
+
+	std::cout << "Movemap count: " << m_moves.size() << std::endl;
+
 	std::map<int, NEAT::Genome_t> representatives;
 
 	for (int i = 0; i < NEAT::Population_t::genome_count; ++i) {
@@ -228,8 +263,22 @@ std::vector<double> RDMSolver_t::Impl::getInputArray(const MoveStates_t & movest
 
 int RDMSolver_t::Impl::getOutput(const std::vector<double>& state)
 {
-	//TODO
-	return RDM_OUTPUT_JOLT2;
+	std::vector<double> output;
+	//output.push_back(1 / (1 + exp(-4.9*state[3])));
+	for (int i = RDM_OUTPUT_BEGIN; i <= RDM_OUTPUT_END; ++i)
+		output.push_back(state[i]);
+	output = NEAT::softmax(output);
+
+	int maxId = 0;
+	double maxVal = 0.0;
+	for (int i = 0; i < output.size(); ++i) {
+		if (output[i] > maxVal) {
+			maxVal = output[i];
+			maxId = i;
+		}
+	}
+
+	return RDM_OUTPUT_BEGIN + maxId;
 }
 
 void RDMSolver_t::Impl::performOnePass(std::vector<double>& state, std::vector<double>& state_prev, const SparseMatrix_t<double>& Wxh, const SparseMatrix_t<double>& Whh) {
@@ -276,9 +325,6 @@ MoveStates_t RDMSolver_t::evaluate(const NEAT::Genome_t & g, const MoveStates_t 
 
 		pimpl->performOnePass(state, state_prev, Wxh, Whh);
 
-		//std::vector<double> outputArray = pimpl->getOutputArray(state);
-		//outputArray = NEAT::softmax(outputArray);
-		//int nextMoveId = pimpl->findBestMoveId(outputArray);
 		int nextMoveId = pimpl->getOutput(state);
 		std::shared_ptr<Move_t> nextMove = pimpl->m_moves[nextMoveId];
 
@@ -304,9 +350,8 @@ void RDMSolver_t::evaluateGeneration(const MoveStates_t& opener)
 		//pimpl->m_neat.setFitness(g, fitness);
 		pimpl->m_neat.setFitness(g, fitness*fitness);
 
-		//std::cout << "\tEvaluated genome #" << g << std::endl;
 		progress += (1.0 / pimpl->m_neat.size());
-		int stars = progress * 20;
+		int stars = (int)(progress * 20);
 		std::cout << "\r\tProgress: [" << std::string(stars, '*') << std::string(20 - stars, ' ') << "] " << (int)(100 * progress) << "%";
 	}
 	std::cout << std::endl;
