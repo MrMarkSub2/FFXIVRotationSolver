@@ -319,6 +319,21 @@ namespace RDMModelTestCases
             return movestates;
         }
 
+		TEST_METHOD(TryToAddMoveTest) {
+			State_t state;
+			state.m_statics.m_gcd = 2420;
+
+			MoveStates_t movestates(state);
+
+			std::shared_ptr<Move_t> jolt2(new Jolt2_t());
+			Assert::AreEqual((int)State_t::UA_IS_CASTING, (int)movestates.tryToAddMove(jolt2), L"Couldn't cast first Jolt 2");
+			for (int i = 0; i < 2420; i += 10) {
+				Assert::AreEqual((int)State_t::UA_NOT_USEABLE, (int)movestates.tryToAddMove(jolt2), L"Shouldn't be able to spam Jolt 2");
+				movestates.advance(10);
+			}
+			Assert::AreEqual((int)State_t::UA_SUCCESS, (int)movestates.tryToAddMove(jolt2), L"Couldn't dualcast second Jolt 2");
+		}
+
         TEST_METHOD(IterateAbilityChars)
         {
             MoveStates_t movestates = createMovestatesMeleeFinisher();

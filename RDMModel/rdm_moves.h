@@ -338,6 +338,7 @@ public:
 
     friend void swap(MoveStates_t& ms1, MoveStates_t& ms2);
 
+	State_t::UseActionRval_t tryToAddMove(std::shared_ptr<Move_t> move);
     MoveStates_t& advanceAndAddMove(std::shared_ptr<Move_t> move);
     MoveStates_t& advanceAndAddMoveString(const MoveString_t& movestring);
     MoveStates_t& advance(int ms);

@@ -282,7 +282,14 @@ int RDMSolver_t::Impl::getOutput(const std::vector<double>& state)
 }
 
 void RDMSolver_t::Impl::performOnePass(std::vector<double>& state, std::vector<double>& state_prev, const SparseMatrix_t<double>& Wxh, const SparseMatrix_t<double>& Whh) {
-	//TODO
+	std::vector<double> curr_w = Wxh.mult(state);
+	std::vector<double> prev_w = Whh.mult(state_prev);
+
+	state_prev = state;
+
+	for (int i = 0; i < state.size(); ++i) {
+		state[i] = tanh(curr_w[i] + prev_w[i]);
+	}
 }
 
 RDMSolver_t::RDMSolver_t()
@@ -328,8 +335,9 @@ MoveStates_t RDMSolver_t::evaluate(const NEAT::Genome_t & g, const MoveStates_t 
 		int nextMoveId = pimpl->getOutput(state);
 		std::shared_ptr<Move_t> nextMove = pimpl->m_moves[nextMoveId];
 
-		//if (movestates.addMove(nextMove) != State_t::UA_NOT_USEABLE) {
-			// I guess I don't HAVE to check this?
+		movestates.tryToAddMove(nextMove);
+		//if (movestates.tryToAddMove(nextMove) != State_t::UA_NOT_USEABLE) {
+		//  I guess I don't HAVE to check this?
 		//}
 
 		movestates.advance(10);
@@ -363,6 +371,11 @@ const NEAT::Genome_t& RDMSolver_t::getBestOfGeneration() const
 		pimpl->m_best_of_generation_id = pimpl->m_neat.getFittestGenomeId();
 
 	return pimpl->m_neat.getGenome(pimpl->m_best_of_generation_id);
+}
+
+int RDMSolver_t::getSpeciesCount() const
+{
+	return pimpl->m_neat.getSpeciesIds().size();
 }
 
 void RDMSolver_t::nextGeneration()

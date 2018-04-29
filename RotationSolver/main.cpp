@@ -96,12 +96,12 @@ void runRDMSolver() {
 	for (int i = 0; i < 1000; ++i) {
 		RDMSolve.evaluateGeneration(opener);
 		NEAT::Genome_t bestG = RDMSolve.getBestOfGeneration();
-		std::cout << "Gen: " << RDMSolve.getGeneration() << "   DPS: " << sqrt(bestG.getFitness()) << "   Nodes: " << bestG.Wxh().rowCount() << "   Connect: " << bestG.Wxh().size() << std::endl;
-		//for (int j = 0; j < bestG.Wxh().m_elems.size(); ++j)
-		//	std::cout << "\t(" << bestG.Wxh().m_elems[j].col << "," << bestG.Wxh().m_elems[j].row << ") = " << bestG.Wxh().m_elems[j].val << std::endl;
-
 		MoveStates_t output = RDMSolve.evaluate(bestG, opener);
 		output.print(std::cout, MoveStates_t::MS_PRINT_DPS, '\t');
+		std::cout << "Species Count: " << RDMSolve.getSpeciesCount() << std::endl;
+		std::cout << "Gen: " << RDMSolve.getGeneration() << "   DPS: " << output.constLastState().getDPS().calc() << "   Nodes: " << bestG.Wxh().rowCount() << "   Connect: " << bestG.Wxh().size() << std::endl;
+		//for (int j = 0; j < bestG.Wxh().m_elems.size(); ++j)
+		//	std::cout << "\t(" << bestG.Wxh().m_elems[j].col << "," << bestG.Wxh().m_elems[j].row << ") = " << bestG.Wxh().m_elems[j].val << std::endl;
 
 		RDMSolve.nextGeneration();
 	}

@@ -21,6 +21,7 @@ public:
 	MoveStates_t evaluate(const NEAT::Genome_t& g, const MoveStates_t& input) const;
 	void ROTATION_SOLVER_API evaluateGeneration(const MoveStates_t & opener);
 	const NEAT::Genome_t ROTATION_SOLVER_API & getBestOfGeneration() const;
+	int ROTATION_SOLVER_API getSpeciesCount() const;
 	void ROTATION_SOLVER_API nextGeneration();
 
 private:
