@@ -263,12 +263,16 @@ std::vector<double> RDMSolver_t::Impl::getInputArray(const MoveStates_t & movest
 
 int RDMSolver_t::Impl::getOutput(const std::vector<double>& state)
 {
-	std::vector<double> output;
-	//output.push_back(1 / (1 + exp(-4.9*state[3])));
-	for (int i = RDM_OUTPUT_BEGIN; i <= RDM_OUTPUT_END; ++i)
-		output.push_back(state[i]);
-	output = NEAT::softmax(output);
+	std::vector<double> output(RDM_OUTPUT_END - RDM_OUTPUT_BEGIN + 1);
+	for (int i = 0; i < RDM_OUTPUT_END - RDM_OUTPUT_BEGIN + 1; ++i)
+		output[i] = state[RDM_OUTPUT_BEGIN + i];
+	
+	// Since all I care about is "which action is the strongest?" there is little purpose in the expensive softmax. That'd be more useful
+	// if we were doing reinforcement learning
+	// NEAT::softmax(output);
 
+	// TECHNICALLY this biases Jolt2 to show up. In practicality though, because of softmax this bias would only manifest if Jolt2 was already tied for
+	// first place. And besides, experimentally it's very unlikely that there won't be at least one "spam Jolt2 spell" genome in Generation #0
 	int maxId = 0;
 	double maxVal = 0.0;
 	for (int i = 0; i < output.size(); ++i) {

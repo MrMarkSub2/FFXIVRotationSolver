@@ -47,7 +47,7 @@ double NEAT::ReLU(double x)
 	//return tanh(x);
 }
 
-std::vector<double> NEAT::softmax(std::vector<double> v)
+void NEAT::softmax(std::vector<double>& v)
 {
 	// find max element
 	double v_max = std::numeric_limits<double>::lowest();
@@ -66,8 +66,6 @@ std::vector<double> NEAT::softmax(std::vector<double> v)
 	});
 
 	// finally, divide each value e^x / sum(e^x)
-	if (/*v_sum != 0 && */!isnan(v_sum) && !isinf(v_sum))
+	if (v_sum != 0 && !isnan(v_sum) && !isinf(v_sum))
 		std::transform(v.begin(), v.end(), v.begin(), [=](double x) { return x / v_sum; });
-
-	return v;
 }

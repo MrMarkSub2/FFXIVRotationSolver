@@ -24,5 +24,5 @@ namespace NEAT {
 	// NEAT paper recommended sigmoidal(x) = 1 / (1+e^(?4.9*x)) instead of ReLU, but other sources implied ReLU is really good... maybe experiment
 
 	// consider templatizing
-	std::vector<double> NEAT_API softmax(std::vector<double> v);
+	void NEAT_API softmax(std::vector<double>& v);
 }
