@@ -20,7 +20,7 @@ namespace RDMModelTestCases
 
             Assert::AreEqual((int)State_t::UA_IS_CASTING, (int)state.UseAction(jolt2));
             state.AdvanceTimeForGCD();
-            AssertIsEssentuallyEqual(96.0, state.getDPS().calc());
+            AssertIsEssentuallyEqual(112.0, state.getDPS().calc());
         }
 
         TEST_METHOD(Doublecast) {
@@ -50,7 +50,7 @@ namespace RDMModelTestCases
             state1.AdvanceTimeForGCD();
             Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state1.UseAction(verthunder), L"state1 verthunder not successful");
             state1.AdvanceTimeForGCD();
-            AssertIsEssentuallyEqual(108.0, state1.getDPS().calc());
+            AssertIsEssentuallyEqual(130.0, state1.getDPS().calc());
 
             State_t state2;
             state2.m_statics.m_gcd = 2500;
@@ -62,7 +62,7 @@ namespace RDMModelTestCases
             Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state2.UseAction(fleche), L"state2 fleche not useable");
             state2.AdvanceTimeForGCD();
             Assert::AreEqual((int)State_t::UA_NOT_USEABLE, (int)state2.UseAction(fleche), L"state2 fleche usable immediately");
-            AssertIsEssentuallyEqual(192.0, state2.getDPS().calc());
+            AssertIsEssentuallyEqual(218.0, state2.getDPS().calc());
         }
 
         TEST_METHOD(VerflareIsPrettier) {
@@ -75,6 +75,7 @@ namespace RDMModelTestCases
             std::shared_ptr<Move_t> zwer(new EnhZwerchhau_t());
             std::shared_ptr<Move_t> redoub(new EnhRedoublement_t());
             std::shared_ptr<Move_t> verflare(new Verflare_t());
+			std::shared_ptr<Move_t> scorch(new Scorch_t());
 
             std::shared_ptr<Move_t> fleche(new Fleche_t());
             std::shared_ptr<Move_t> corps(new Corps_t());
@@ -101,9 +102,12 @@ namespace RDMModelTestCases
             Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(verflare), L"verflare failed");
             state.AdvanceTimeForGCD();
 
-            Assert::AreEqual(2200, state.m_total_potency);
-            Assert::AreEqual(7700, state.m_total_duration);
-            AssertIsEssentuallyEqual(2200.0 / 7.7, state.getDPS().calc());
+			Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(scorch), L"scorch failed");
+			state.AdvanceTimeForGCD();
+
+            Assert::AreEqual(3040, state.m_total_potency);
+            Assert::AreEqual(10200, state.m_total_duration);
+            AssertIsEssentuallyEqual(3040.0 / 10.2, state.getDPS().calc());
         }
 
         TEST_METHOD(BOLDVerflare) {
@@ -116,6 +120,7 @@ namespace RDMModelTestCases
             std::shared_ptr<Move_t> zwer(new EnhZwerchhau_t());
             std::shared_ptr<Move_t> redoub(new EnhRedoublement_t());
             std::shared_ptr<Move_t> verflare(new Verflare_t());
+			std::shared_ptr<Move_t> scorch(new Scorch_t());
 
             std::shared_ptr<Move_t> fleche(new Fleche_t());
             std::shared_ptr<Move_t> corps(new Corps_t());
@@ -126,30 +131,33 @@ namespace RDMModelTestCases
             Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(embolden), L"embolden failed");
             state.AdvanceTimeForAbility();
 
-            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(rip), L"riposte failed");
+            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(rip), L"riposte failed");  // 210 * 1.1
             Assert::AreEqual(1500, state.m_caststate.m_gcd);
             state.AdvanceTimeForAbility();
-            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(corps), L"corps failed");
+            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(corps), L"corps failed");  // 130
             Assert::AreEqual(800, state.m_caststate.m_gcd);
             state.AdvanceTimeForGCD();
 
-            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(zwer), L"zwer failed");
+            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(zwer), L"zwer failed");  // 290 * 1.1
             state.AdvanceTimeForAbility();
-            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(fleche), L"fleche failed");
+            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(fleche), L"fleche failed");  // 440
             state.AdvanceTimeForGCD();
 
-            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(redoub), L"redoub failed");
+            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(redoub), L"redoub failed");  // 470 * 1.1
             Assert::AreEqual(2200, state.m_caststate.m_gcd);
             state.AdvanceTimeForAbility();
-            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(disp), L"disp failed");
+            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(disp), L"disp failed");  // 200
             state.AdvanceTimeForGCD();
 
-            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(verflare), L"verflare failed");
+            Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(verflare), L"verflare failed");  // 600 * 1.08
             state.AdvanceTimeForGCD();
 
-            Assert::AreEqual(2341, state.m_total_potency);
-            Assert::AreEqual(8400, state.m_total_duration);
-            AssertIsEssentuallyEqual(2341.0 / 8.4, state.getDPS().calc());
+			Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(scorch), L"scorch failed");  // 700 * 1.06
+			state.AdvanceTimeForGCD();
+
+            Assert::AreEqual(3227, state.m_total_potency);
+            Assert::AreEqual(10900, state.m_total_duration);
+            AssertIsEssentuallyEqual(3227.0 / 10.9, state.getDPS().calc());
         }
 
         TEST_METHOD(FlecheFleche) {
@@ -178,9 +186,9 @@ namespace RDMModelTestCases
                 state.AdvanceTimeForGCD();
             }
 
-            Assert::AreEqual(100440, state.m_total_potency);
+            Assert::AreEqual(120900, state.m_total_potency);
             Assert::AreEqual(15*60*1000, state.m_total_duration);
-            AssertIsEssentuallyEqual(111.6, state.getDPS().calc());
+            AssertIsEssentuallyEqual(120900.0 / 15 / 60, state.getDPS().calc());
         }
 
         TEST_METHOD(ManificationTest) {
@@ -215,6 +223,7 @@ namespace RDMModelTestCases
 
         TEST_METHOD(AccelerationTest) {
             std::shared_ptr<Move_t> jolt2(new Jolt2_t());
+			std::shared_ptr<Move_t> verfire(new Verfire_t());
             std::shared_ptr<Move_t> verthunder(new Verthunder_t());
             std::shared_ptr<Move_t> accel(new Acceleration_t());
 
@@ -222,13 +231,29 @@ namespace RDMModelTestCases
             for (int i = 0; i < 100; ++i) {
                 State_t state;
                 
-                Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(accel));
+                Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(accel), L"couldn't use acceleration");
                 state.AdvanceTimeForAbility();
                 state.UseAction(jolt2);
+
                 state.AdvanceTimeForGCD();
                 state.UseAction(verthunder);
+				Assert::IsTrue(state.m_status.m_verfire > 0, L"guaranteed proc #1 fail");
 
-                Assert::IsTrue(state.m_status.m_verfire > 0);
+				state.AdvanceTimeForGCD();
+				state.UseAction(verfire);
+				state.AdvanceTimeForGCD();
+				Assert::IsTrue(state.m_status.m_verfire == 0, L"couldn't eat proc #1");
+
+				state.UseAction(verthunder);
+				Assert::IsTrue(state.m_status.m_verfire > 0, L"guaranteed proc #2 fail");
+
+				state.AdvanceTimeForGCD();
+				state.UseAction(verfire);
+				state.AdvanceTimeForGCD();
+				Assert::IsTrue(state.m_status.m_verfire == 0, L"couldn't eat proc #2");
+
+				state.UseAction(verthunder);
+				Assert::IsTrue(state.m_status.m_verfire > 0, L"guaranteed proc #3 fail");
             }
         }
 
@@ -260,20 +285,24 @@ namespace RDMModelTestCases
         TEST_METHOD(AoETest) {
             State_t state;
             std::shared_ptr<Move_t> moul(new EnhMoulinet_t());
-            std::shared_ptr<Move_t> scatter(new Scatter_t());
+            std::shared_ptr<Move_t> veraero2(new Veraero2_t());
+			std::shared_ptr<Move_t> impact(new Impact_t());
             std::shared_ptr<Move_t> contre(new Contre_t());
             state.m_mana.add(30, 30);
             state.m_statics.m_targets = 10;
             state.m_caststate.m_out_of_range = 0;
 
-            Assert::AreEqual((int)State_t::UA_IS_CASTING, (int)state.UseAction(scatter), L"scatter failed");
+            Assert::AreEqual((int)State_t::UA_IS_CASTING, (int)state.UseAction(veraero2), L"veraero2 failed");
             state.AdvanceTimeForGCD();
-            Assert::AreEqual(1000, state.m_total_potency);
+            Assert::AreEqual(1200, state.m_total_potency);
+			Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(impact), L"impact failed");
+			state.AdvanceTimeForGCD();
+			Assert::AreEqual(1200 + 2200, state.m_total_potency);
             Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(moul), L"moul failed");
-            Assert::AreEqual(1000 + 2000, state.m_total_potency);
+            Assert::AreEqual(1200 + 2200 + 2000, state.m_total_potency);
             state.AdvanceTimeForAbility();
             Assert::AreEqual((int)State_t::UA_SUCCESS, (int)state.UseAction(contre), L"contre failed");
-            Assert::AreEqual(1000 + 2000 + 1950, state.m_total_potency);
+            Assert::AreEqual(1200 + 2200 + 2000 + 4000, state.m_total_potency);
         }
 
         TEST_METHOD(GTFOManalessMelee) {
@@ -315,7 +344,7 @@ namespace RDMModelTestCases
                 state.AdvanceTimeForGCD();
             }
 
-            Assert::AreEqual(540 * 6 + 569 * 6, state.m_total_potency);
+            Assert::AreEqual(650 * 6 + 685 * 6, state.m_total_potency);
         }
 
         TEST_METHOD(ClippingTest) {

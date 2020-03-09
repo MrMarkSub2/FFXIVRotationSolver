@@ -259,32 +259,28 @@ void swap(MoveStates_t & ms1, MoveStates_t & ms2)
 MoveStates_t getMinimalisticOpener()
 {
     State_t opener_state;
-    opener_state.m_caststate.m_clipping = -1400; // offset allegedly clipping in precast accel/div
-    opener_state.m_caststate.m_dead_time = -8600 - (-5000 * opener_state.m_statics.m_gcd / 25000 * 10); // offset allegedly dead time in precast accel/div
+    opener_state.m_caststate.m_clipping = -700; // offset allegedly clipping in precast accel/div
+    opener_state.m_caststate.m_dead_time = -14200 - (-5000 * opener_state.m_statics.m_gcd / 25000 * 10); // offset allegedly dead time in precast accel/div
     MoveStates_t opener_ms(opener_state);
 
     std::shared_ptr<Move_t> accel(new Acceleration_t());
-    std::shared_ptr<Move_t> div(new DiversionPlaceholder_t());
     std::shared_ptr<Move_t> veraero(new Veraero_t());
 
     opener_ms.advanceAndAddMove(accel);
-    opener_ms.advance(4000);
-    opener_ms.advanceAndAddMove(div);
-    opener_ms.advance((-5000 * opener_state.m_statics.m_gcd / 25000 * 10) - (-6000)); // butt it right up against start time
+    opener_ms.advance((-5000 * opener_state.m_statics.m_gcd / 25000 * 10) - (-14900)); // butt it right up against start time
     opener_ms.advanceAndAddMove(veraero);
 
-    return MoveStates_t(opener_ms, -10 * 1000);
+    return MoveStates_t(opener_ms, -14900);
 }
 
-MoveStates_t getRaid5thGCDEmboldenOpener()
+MoveStates_t getRaid3rdGCDEmboldenOpener()
 {
     State_t opener_state;
-    opener_state.m_caststate.m_clipping = -1400; // offset allegedly clipping in precast accel/div
-    opener_state.m_caststate.m_dead_time = -8600 - (-5000 * opener_state.m_statics.m_gcd / 25000 * 10); // offset allegedly dead time in precast accel/div
+    opener_state.m_caststate.m_clipping = -700; // offset allegedly clipping in precast accel/div
+    opener_state.m_caststate.m_dead_time = -14200 - (-5000 * opener_state.m_statics.m_gcd / 25000 * 10); // offset allegedly dead time in precast accel/div
     MoveStates_t opener_ms(opener_state);
 
     std::shared_ptr<Move_t> accel(new Acceleration_t());
-    std::shared_ptr<Move_t> div(new DiversionPlaceholder_t());
     std::shared_ptr<Move_t> veraero(new Veraero_t());
     std::shared_ptr<Move_t> verthunder(new Verthunder_t());
     std::shared_ptr<Move_t> infusion(new Infusion_t());
@@ -293,53 +289,48 @@ MoveStates_t getRaid5thGCDEmboldenOpener()
     std::shared_ptr<Move_t> fleche(new Fleche_t());
     std::shared_ptr<Move_t> contre(new Contre_t());
     std::shared_ptr<Move_t> jolt2(new Jolt2_t());
-    std::shared_ptr<Move_t> impact(new Impact_t());
     std::shared_ptr<Move_t> swift(new Swiftcast_t());
     std::shared_ptr<Move_t> embolden(new Embolden_t());
     std::shared_ptr<Move_t> corps(new Corps_t());
     std::shared_ptr<Move_t> disp(new Displacement_t());
+	std::shared_ptr<Move_t> engage(new Engagement_t());
     std::shared_ptr<Move_t> mani(new Manification_t());
     std::shared_ptr<Move_t> rip(new EnhRiposte_t());
     std::shared_ptr<Move_t> zwer(new EnhZwerchhau_t());
     std::shared_ptr<Move_t> redoub(new EnhRedoublement_t());
     std::shared_ptr<Move_t> verflare(new Verflare_t());
+	std::shared_ptr<Move_t> scorch(new Scorch_t());
 
     opener_ms.advanceAndAddMove(accel);
-    opener_ms.advance(4000);
-    opener_ms.advanceAndAddMove(div);
-    opener_ms.advance((-5000 * opener_state.m_statics.m_gcd / 25000 * 10) - (-6000)); // butt it right up against start time
-    opener_ms.advanceAndAddMove(veraero); // 300 | 0
-    opener_ms.advanceAndAddMove(verthunder); // 300 | 2.42
-    opener_ms.advanceAndAddMove(infusion); //  | 2.42 no clip
-    opener_ms.advanceAndAddMove(verstone); // 284 | 4.84
-    opener_ms.advanceAndAddMove(veraero); // 316 | 7.26
-    opener_ms.advanceAndAddMove(fleche); // 442 | 7.26 no clip
-    opener_ms.advanceAndAddMove(contre); // 316 | 7.26 no clip
-    opener_ms.advanceAndAddMove(jolt2); // 253 | 9.68 
-    opener_ms.advanceAndAddMove(verthunder); // 316 | 12.10
-    opener_ms.advanceAndAddMove(swift); //  | 12.10 no clip
-    opener_ms.advanceAndAddMove(embolden); //  | 12.10 no clip | EMBOLDEN 5
-    opener_ms.advanceAndAddMove(verthunder); // 347 | 14.52
-    opener_ms.advanceAndAddMove(disp); // 137 | 14.52 no clip
-    opener_ms.advanceAndAddMove(corps); // 137 | 14.85 clipping!
-    opener_ms.advanceAndAddMove(impact); // 307 | 17.27 | EMBOLDEN 4
-    opener_ms.advanceAndAddMove(veraero); // 341 | 19.69
-    opener_ms.advanceAndAddMove(div); // actually Manashift but w/e
-    opener_ms.advanceAndAddMove(mani); //  | 19.69 no clip
-    opener_ms.advanceAndAddMove(rip); // 234 | 21.19 | EMBOLDEN 3
-    opener_ms.advanceAndAddMove(corps); // 137 | 21.19 no clip
-    opener_ms.advanceAndAddMove(zwer); // 324 | 22.69
-    opener_ms.advanceAndAddMove(redoub); // 525 | 24.89
-    opener_ms.advanceAndAddMove(disp); // 137 | 24.89 no clip
-    opener_ms.advanceAndAddMove(verflare); // 603 | 27.31 | EMBOLDEN 2
-    opener_ms.advanceAndAddMove(accel); //  | 27.31 no clip
-    opener_ms.advanceAndAddMove(verfire); // 290 | 29.73 | EMBOLDEN 1
-    opener_ms.advanceAndAddMove(veraero); // 322 | 32.15
-    opener_ms.advanceAndAddMove(fleche); // 442 | 32.15 no clip
+    opener_ms.advance((-5000 * opener_state.m_statics.m_gcd / 25000 * 10) - (-14900)); // butt it right up against start time
+	opener_ms.advanceAndAddMove(veraero); // 370 | 0
+	opener_ms.advanceAndAddMove(verthunder); // 370 | 2.42
+	opener_ms.advanceAndAddMove(infusion); //  | 2.42 no clip
+	opener_ms.advanceAndAddMove(verstone); // 316 | 4.84
+	opener_ms.advanceAndAddMove(veraero); // 390 | 7.26
+	opener_ms.advanceAndAddMove(fleche); // 463 | 7.26 no clip
+	opener_ms.advanceAndAddMove(embolden); //  | 7.26 no clip | EMBOLDEN 5
+	opener_ms.advanceAndAddMove(verfire); // 347 | 9.68
+	opener_ms.advanceAndAddMove(verthunder); // 429 | 12.10
+	opener_ms.advanceAndAddMove(corps); // 137 | 12.10 no clip
+	opener_ms.advanceAndAddMove(contre); // 421 | 12.10 no clip
+	opener_ms.advanceAndAddMove(verstone); // 341 | 14.52 | EMBOLDEN 3
+	opener_ms.advanceAndAddMove(verthunder); // 413 | 16.94
+	opener_ms.advanceAndAddMove(engage); // 158 | 16.94 no clip
+	opener_ms.advanceAndAddMove(mani); //  | 16.94 no clip
+	opener_ms.advanceAndAddMove(rip); // 234 | 18.44
+	opener_ms.advanceAndAddMove(corps); // 137 | 18.44 no clip
+	opener_ms.advanceAndAddMove(zwer); // 318 | 19.94
+	opener_ms.advanceAndAddMove(redoub); // 515 | 22.14 | EMBOLDEN 2
+	opener_ms.advanceAndAddMove(disp); // 210 | 22.14 no clip
+	opener_ms.advanceAndAddMove(verflare); // 658 | 24.56
+	opener_ms.advanceAndAddMove(scorch); // 752 | 26.98 | EMBOLDEN 1
+	opener_ms.advanceAndAddMove(verfire); // 316 | 29.40 | EMBOLDEN 0
+	opener_ms.advanceAndAddMove(veraero); // 390 | 31.82
+	opener_ms.advanceAndAddMove(fleche); // 463 | 31.82 no clip
     // infusion wears off AFTER fleche
-    // embolden wears off AFTER embolden
 
-    return MoveStates_t(opener_ms, -10 * 1000);
+    return MoveStates_t(opener_ms, -14900);
 }
 
 /*bool Move_t::Impl::operator==(const Move_t::Impl & rhs) const
@@ -408,36 +399,14 @@ Jolt2_t::Jolt2_t()
     pimpl->m_name = "Jolt II";
     pimpl->m_char = "J";
     pimpl->m_type = SPELL_TYPE;
-    pimpl->m_potency = 240;
+    pimpl->m_potency = 280;
     pimpl->m_white = 3;
     pimpl->m_black = 3;
 }
 
 void Jolt2_t::Execute(State_t & state) const
 {
-    state.m_status.m_impactful = 30 * 1000;
     state.m_melee_combo = State_t::MELEE_RIPOSTE;
-}
-
-Impact_t::Impact_t()
-{
-    pimpl->m_name = "Impact";
-    pimpl->m_char = "I";
-    pimpl->m_type = SPELL_TYPE;
-    pimpl->m_potency = 270;
-    pimpl->m_white = 4;
-    pimpl->m_black = 4;
-}
-
-void Impact_t::Execute(State_t & state) const
-{
-    state.m_status.m_impactful = 0;
-    state.m_melee_combo = State_t::MELEE_RIPOSTE;
-}
-
-bool Impact_t::IsUseable(const State_t & state) const
-{
-    return (state.m_status.m_impactful > 0);
 }
 
 Verthunder_t::Verthunder_t()
@@ -446,17 +415,21 @@ Verthunder_t::Verthunder_t()
     pimpl->m_char = "T";
     pimpl->m_type = SPELL_TYPE;
     pimpl->m_cast = 5000;
-    pimpl->m_potency = 300;
+    pimpl->m_potency = 370;
     pimpl->m_white = 0;
     pimpl->m_black = 11;
 }
 
 void Verthunder_t::Execute(State_t & state) const
 {
-    if ((state.m_status.m_acceleration > 0) || (rand() % 100 < 50))
+	if (state.m_status.m_acceleration > 0 && state.m_status.m_accel_stacks > 0) {
+		state.m_status.m_verfire = 30 * 1000;
+		--state.m_status.m_accel_stacks;
+		if (state.m_status.m_accel_stacks == 0) // used up the last stack, kill its timer
+			state.m_status.m_acceleration = 0;
+	} else if (rand() % 100 < 50)
         state.m_status.m_verfire = 30 * 1000;
 
-    state.m_status.m_acceleration = 0;
     state.m_melee_combo = State_t::MELEE_RIPOSTE;
 }
 
@@ -466,17 +439,21 @@ Veraero_t::Veraero_t()
     pimpl->m_char = "A";
     pimpl->m_type = SPELL_TYPE;
     pimpl->m_cast = 5000;
-    pimpl->m_potency = 300;
+    pimpl->m_potency = 370;
     pimpl->m_white = 11;
     pimpl->m_black = 0;
 }
 
 void Veraero_t::Execute(State_t & state) const
 {
-    if ((state.m_status.m_acceleration > 0) || (rand() % 100 < 50))
-        state.m_status.m_verstone = 30 * 1000;
+	if (state.m_status.m_acceleration > 0 && state.m_status.m_accel_stacks > 0) {
+		state.m_status.m_verstone = 30 * 1000;
+		--state.m_status.m_accel_stacks;
+		if (state.m_status.m_accel_stacks == 0) // used up the last stack, kill its timer
+			state.m_status.m_acceleration = 0;
+	} else if (rand() % 100 < 50)
+		state.m_status.m_verstone = 30 * 1000;
 
-    state.m_status.m_acceleration = 0;
     state.m_melee_combo = State_t::MELEE_RIPOSTE;
 }
 
@@ -485,7 +462,7 @@ Verfire_t::Verfire_t()
     pimpl->m_name = "Verfire";
     pimpl->m_char = "F";
     pimpl->m_type = SPELL_TYPE;
-    pimpl->m_potency = 270;
+    pimpl->m_potency = 300;
     pimpl->m_white = 0;
     pimpl->m_black = 9;
 }
@@ -506,7 +483,7 @@ Verstone_t::Verstone_t()
     pimpl->m_name = "Verstone";
     pimpl->m_char = "S";
     pimpl->m_type = SPELL_TYPE;
-    pimpl->m_potency = 270;
+    pimpl->m_potency = 300;
     pimpl->m_white = 9;
     pimpl->m_black = 0;
 }
@@ -529,24 +506,27 @@ Verflare_t::Verflare_t()
     pimpl->m_type = FINISHER_TYPE;
     pimpl->m_cast = 0;
     pimpl->m_potency = 0;
-    pimpl->m_combo_potency = 550;
+    pimpl->m_combo_potency = 600;
     pimpl->m_white = 0;
     pimpl->m_black = 21;
 }
 
 void Verflare_t::Execute(State_t & state) const
 {
-    state.m_melee_combo = State_t::MELEE_RIPOSTE;
+    state.m_melee_combo = State_t::MELEE_SCORCH;
 
     if (state.m_mana.black() < state.m_mana.white()) {
         state.m_status.m_verfire = 30 * 1000;
         return; // acceleration is protected in this case
     }
 
-    if ((state.m_status.m_acceleration > 0) || (rand() % 100 < 20))
+	if (state.m_status.m_acceleration > 0 && state.m_status.m_accel_stacks > 0) {
+		state.m_status.m_verfire = 30 * 1000;
+		--state.m_status.m_accel_stacks;
+		if (state.m_status.m_accel_stacks == 0) // used up the last stack, kill its timer
+			state.m_status.m_acceleration = 0;
+	} else if (rand() % 100 < 20)
         state.m_status.m_verfire = 30 * 1000;
-
-    state.m_status.m_acceleration = 0;
 }
 
 bool Verflare_t::IsUseable(const State_t & state) const
@@ -566,24 +546,27 @@ Verholy_t::Verholy_t()
     pimpl->m_type = FINISHER_TYPE;
     pimpl->m_cast = 0;
     pimpl->m_potency = 0;
-    pimpl->m_combo_potency = 550;
+    pimpl->m_combo_potency = 600;
     pimpl->m_white = 21;
     pimpl->m_black = 0;
 }
 
 void Verholy_t::Execute(State_t & state) const
 {
-    state.m_melee_combo = State_t::MELEE_RIPOSTE;
+    state.m_melee_combo = State_t::MELEE_SCORCH;
 
     if (state.m_mana.white() < state.m_mana.black()) {
         state.m_status.m_verstone = 30 * 1000;
         return; // acceleration is protected in this case
     }
 
-    if ((state.m_status.m_acceleration > 0) || (rand() % 100 < 20))
+	if (state.m_status.m_acceleration > 0 && state.m_status.m_accel_stacks > 0) {
+		state.m_status.m_verstone = 30 * 1000;
+		--state.m_status.m_accel_stacks;
+		if (state.m_status.m_accel_stacks == 0) // used up the last stack, kill its timer
+			state.m_status.m_acceleration = 0;
+	} else if (rand() % 100 < 20)
         state.m_status.m_verstone = 30 * 1000;
-
-    state.m_status.m_acceleration = 0;
 }
 
 bool Verholy_t::IsUseable(const State_t & state) const
@@ -594,6 +577,33 @@ bool Verholy_t::IsUseable(const State_t & state) const
 int Verholy_t::CalculatePotency(const State_t & state) const
 {
     return pimpl->m_combo_potency;
+}
+
+Scorch_t::Scorch_t()
+{
+	pimpl->m_name = "Scorch";
+	pimpl->m_char = "S";
+	pimpl->m_type = FINISHER_TYPE;
+	pimpl->m_cast = 0;
+	pimpl->m_potency = 0;
+	pimpl->m_combo_potency = 700;
+	pimpl->m_white = 7;
+	pimpl->m_black = 7;
+}
+
+void Scorch_t::Execute(State_t & state) const
+{
+	state.m_melee_combo = State_t::MELEE_RIPOSTE;
+}
+
+bool Scorch_t::IsUseable(const State_t & state) const
+{
+	return (state.m_melee_combo == State_t::MELEE_SCORCH);
+}
+
+int Scorch_t::CalculatePotency(const State_t & state) const
+{
+	return pimpl->m_combo_potency;
 }
 
 Corps_t::Corps_t()
@@ -626,7 +636,7 @@ Displacement_t::Displacement_t()
     pimpl->m_is_magical_damage = false;
     pimpl->m_cast = 0;
     pimpl->m_recast = 35 * 1000;
-    pimpl->m_potency = 130;
+    pimpl->m_potency = 200;
     pimpl->m_animation_lock = 1350;
 }
 
@@ -641,18 +651,41 @@ bool Displacement_t::IsUseable(const State_t & state) const
     return ((state.m_recast.m_displacement == 0) && (state.m_caststate.m_out_of_range == 0));
 }
 
+Engagement_t::Engagement_t()
+{
+	pimpl->m_name = "Engagement";
+	pimpl->m_char = "x";
+	pimpl->m_type = ABILITY_TYPE;
+	pimpl->m_is_magical_damage = false;
+	pimpl->m_cast = 0;
+	pimpl->m_recast = 35 * 1000;
+	pimpl->m_potency = 150;
+}
+
+void Engagement_t::Execute(State_t & state) const
+{
+	// shares recast with Displacement
+	state.m_recast.m_displacement = pimpl->m_recast;
+}
+
+bool Engagement_t::IsUseable(const State_t & state) const
+{
+	return ((state.m_recast.m_displacement == 0) && (state.m_caststate.m_out_of_range == 0));
+}
+
 Acceleration_t::Acceleration_t()
 {
     pimpl->m_name = "Acceleration";
     pimpl->m_char = "@";
     pimpl->m_type = ABILITY_TYPE;
     pimpl->m_cast = 0;
-    pimpl->m_recast = 35 * 1000;
+    pimpl->m_recast = 55 * 1000;
 }
 
 void Acceleration_t::Execute(State_t & state) const
 {
-    state.m_status.m_acceleration = 10 * 1000;
+    state.m_status.m_acceleration = 20 * 1000;
+	state.m_status.m_accel_stacks = 3;
     state.m_recast.m_acceleration = pimpl->m_recast;
 }
 
@@ -667,7 +700,7 @@ Manification_t::Manification_t()
     pimpl->m_char = "2";
     pimpl->m_type = ABILITY_TYPE;
     pimpl->m_cast = 0;
-    pimpl->m_recast = 120 * 1000;
+    pimpl->m_recast = 110 * 1000;
 }
 
 void Manification_t::Execute(State_t & state) const
@@ -732,7 +765,7 @@ Fleche_t::Fleche_t()
     pimpl->m_is_magical_damage = false;
     pimpl->m_cast = 0;
     pimpl->m_recast = 25 * 1000;
-    pimpl->m_potency = 420;
+    pimpl->m_potency = 440;
 }
 
 void Fleche_t::Execute(State_t & state) const
@@ -752,8 +785,8 @@ Contre_t::Contre_t()
     pimpl->m_type = ABILITY_TYPE;
     pimpl->m_is_magical_damage = false;
     pimpl->m_cast = 0;
-    pimpl->m_recast = 45 * 1000;
-    pimpl->m_potency = 300;
+    pimpl->m_recast = 35 * 1000;
+    pimpl->m_potency = 400;
 }
 
 void Contre_t::Execute(State_t & state) const
@@ -768,25 +801,7 @@ bool Contre_t::IsUseable(const State_t & state) const
 
 int Contre_t::CalculatePotency(const State_t & state) const
 {
-    int potency = 0;
-    switch (state.m_statics.m_targets) {
-    case 12:    potency += pimpl->m_potency * 5 /10;
-    case 11:    potency += pimpl->m_potency * 5 / 10;
-    case 10:    potency += pimpl->m_potency * 5 / 10;
-    case 9:     potency += pimpl->m_potency * 5 / 10;
-    case 8:     potency += pimpl->m_potency * 5 / 10;
-    case 7:     potency += pimpl->m_potency * 5 / 10;
-    case 6:     potency += pimpl->m_potency * 5 / 10;
-    case 5:     potency += pimpl->m_potency * 6 / 10;
-    case 4:     potency += pimpl->m_potency * 7 / 10;
-    case 3:     potency += pimpl->m_potency * 8 / 10;
-    case 2:     potency += pimpl->m_potency * 9 / 10;
-    case 1:     potency += pimpl->m_potency;
-        break;
-    default:    throw std::runtime_error(std::string("Contre Sixte can't handle m_targets=") + std::to_string(state.m_statics.m_targets));
-        break;
-    }
-    return potency;
+	return pimpl->m_potency * state.m_statics.m_targets;
 }
 
 Riposte_t::Riposte_t()
@@ -961,62 +976,65 @@ int EnhRedoublement_t::CalculatePotency(const State_t & state) const
     return state.m_melee_combo == State_t::MELEE_REDOUBLEMENT ? pimpl->m_combo_potency : pimpl->m_potency;
 }
 
-Scatter_t::Scatter_t()
+Verthunder2_t::Verthunder2_t()
 {
-    pimpl->m_name = "Scatter";
-    pimpl->m_char = "*";
-    pimpl->m_type = SPELL_TYPE;
-    pimpl->m_potency = 100;
-    pimpl->m_white = 3;
-    pimpl->m_black = 3;
+	pimpl->m_name = "Verthunder II";
+	pimpl->m_char = "T2";
+	pimpl->m_type = SPELL_TYPE;
+	pimpl->m_potency = 120;
+	pimpl->m_white = 0;
+	pimpl->m_black = 7;
 }
 
-void Scatter_t::Execute(State_t & state) const
+void Verthunder2_t::Execute(State_t & state) const
 {
-    if (rand() % 100 < 25)
-        state.m_status.m_scatter = 10 * 1000;
-
-    state.m_melee_combo = State_t::MELEE_RIPOSTE;
+	state.m_melee_combo = State_t::MELEE_RIPOSTE;
 }
 
-bool Scatter_t::IsUseable(const State_t & state) const
+int Verthunder2_t::CalculatePotency(const State_t & state) const
 {
-    return (state.m_status.m_scatter == 0);
+	return pimpl->m_potency * state.m_statics.m_targets;
 }
 
-int Scatter_t::CalculatePotency(const State_t & state) const
+Veraero2_t::Veraero2_t()
 {
-    return pimpl->m_potency * state.m_statics.m_targets;
+	pimpl->m_name = "Veraero II";
+	pimpl->m_char = "A2";
+	pimpl->m_type = SPELL_TYPE;
+	pimpl->m_potency = 120;
+	pimpl->m_white = 7;
+	pimpl->m_black = 0;
 }
 
-EnhScatter_t::EnhScatter_t()
+void Veraero2_t::Execute(State_t & state) const
 {
-    pimpl->m_name = "Scatter";
-    pimpl->m_char = "*";
-    pimpl->m_type = SPELL_TYPE;
-    pimpl->m_potency = 100;
-    pimpl->m_white = 8;
-    pimpl->m_black = 8;
+	state.m_melee_combo = State_t::MELEE_RIPOSTE;
 }
 
-void EnhScatter_t::Execute(State_t & state) const
+int Veraero2_t::CalculatePotency(const State_t & state) const
 {
-    if (rand() % 100 < 25)
-        state.m_status.m_scatter = 10 * 1000;
-    else
-        state.m_status.m_scatter = 0;
-
-    state.m_melee_combo = State_t::MELEE_RIPOSTE;
+	return pimpl->m_potency * state.m_statics.m_targets;
 }
 
-bool EnhScatter_t::IsUseable(const State_t & state) const
+Impact_t::Impact_t()
 {
-    return (state.m_status.m_scatter > 0);
+	pimpl->m_name = "Impact";
+	pimpl->m_char = "I";
+	pimpl->m_type = SPELL_TYPE;
+	pimpl->m_cast = 5000;
+	pimpl->m_potency = 220;
+	pimpl->m_white = 3;
+	pimpl->m_black = 3;
 }
 
-int EnhScatter_t::CalculatePotency(const State_t & state) const
+void Impact_t::Execute(State_t & state) const
 {
-    return pimpl->m_potency * state.m_statics.m_targets;
+	state.m_melee_combo = State_t::MELEE_RIPOSTE;
+}
+
+int Impact_t::CalculatePotency(const State_t & state) const
+{
+	return pimpl->m_potency * state.m_statics.m_targets;
 }
 
 Moulinet_t::Moulinet_t()
@@ -1038,7 +1056,7 @@ void Moulinet_t::Execute(State_t & state) const
 bool Moulinet_t::IsUseable(const State_t & state) const
 {
     return ((state.m_caststate.m_out_of_range == 0) &&
-        !(state.m_mana.white() >= 30 && state.m_mana.black() >= 30));
+        !(state.m_mana.white() >= 20 && state.m_mana.black() >= 20));
 }
 
 int Moulinet_t::CalculatePotency(const State_t & state) const
@@ -1055,8 +1073,8 @@ EnhMoulinet_t::EnhMoulinet_t()
     pimpl->m_cast = 0;
     pimpl->m_recast = 1500;
     pimpl->m_potency = 200;
-    pimpl->m_white = -30;
-    pimpl->m_black = -30;
+    pimpl->m_white = -20;
+    pimpl->m_black = -20;
 }
 
 void EnhMoulinet_t::Execute(State_t & state) const
@@ -1067,12 +1085,56 @@ void EnhMoulinet_t::Execute(State_t & state) const
 bool EnhMoulinet_t::IsUseable(const State_t & state) const
 {
     return ((state.m_caststate.m_out_of_range == 0) &&
-        (state.m_mana.white() >= 30 && state.m_mana.black() >= 30));
+        (state.m_mana.white() >= 20 && state.m_mana.black() >= 20));
 }
 
 int EnhMoulinet_t::CalculatePotency(const State_t & state) const
 {
     return pimpl->m_potency * state.m_statics.m_targets;
+}
+
+Reprise_t::Reprise_t()
+{
+	pimpl->m_name = "NO MANA Reprise";
+	pimpl->m_char = "P";
+	pimpl->m_type = WEAPONSKILL_TYPE;
+	pimpl->m_is_magical_damage = false;
+	pimpl->m_cast = 0;
+	pimpl->m_recast = 2500;
+	pimpl->m_potency = 100;
+}
+
+void Reprise_t::Execute(State_t & state) const
+{
+	state.m_melee_combo = State_t::MELEE_RIPOSTE;
+}
+
+bool Reprise_t::IsUseable(const State_t & state) const
+{
+	return !(state.m_mana.white() >= 5 && state.m_mana.black() >= 5);
+}
+
+EnhReprise_t::EnhReprise_t()
+{
+	pimpl->m_name = "Reprise";
+	pimpl->m_char = "P";
+	pimpl->m_type = WEAPONSKILL_TYPE;
+	pimpl->m_is_magical_damage = true;
+	pimpl->m_cast = 0;
+	pimpl->m_recast = 2200;
+	pimpl->m_potency = 300;
+	pimpl->m_white = -5;
+	pimpl->m_black = -5;
+}
+
+void EnhReprise_t::Execute(State_t & state) const
+{
+	state.m_melee_combo = State_t::MELEE_RIPOSTE;
+}
+
+bool EnhReprise_t::IsUseable(const State_t & state) const
+{
+	return (state.m_mana.white() >= 5 && state.m_mana.black() >= 5);
 }
 
 Infusion_t::Infusion_t()
@@ -1103,13 +1165,4 @@ EndPlaceholder_t::EndPlaceholder_t()
     pimpl->m_cast = 0;
     pimpl->m_recast = 0;
     pimpl->m_animation_lock = 0;
-}
-
-DiversionPlaceholder_t::DiversionPlaceholder_t()
-{
-    pimpl->m_name = "Diversion";
-    pimpl->m_char = "_";
-    pimpl->m_type = ABILITY_TYPE;
-    pimpl->m_cast = 0;
-    pimpl->m_recast = 120 * 1000;
 }

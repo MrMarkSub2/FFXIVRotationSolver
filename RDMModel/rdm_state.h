@@ -51,6 +51,7 @@ public:
         int m_verfire; // in ms
         int m_scatter; // in ms
         int m_acceleration; // in ms
+		int m_accel_stacks; // between 0 and 3 inclusive
         int m_embolden; // in ms until wears off, > 16000 is V, > 12000 is IV, etc
         int m_swiftcast; // in ms
         int m_infusion; // in ms
@@ -74,7 +75,8 @@ public:
         MELEE_RIPOSTE,
         MELEE_ZWER,
         MELEE_REDOUBLEMENT,
-        MELEE_FINISHER
+        MELEE_FINISHER,
+		MELEE_SCORCH
     } m_melee_combo;
 
     // gets the DPS

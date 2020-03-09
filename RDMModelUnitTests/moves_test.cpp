@@ -17,23 +17,7 @@ namespace RDMModelTestCases
             State_t state;
 
             Assert::IsTrue(move->IsUseable(state));
-            Assert::AreEqual(240, move->CalculatePotency(state));
-
-            Assert::AreEqual(0, state.m_status.m_impactful);
-            move->Execute(state);
-            Assert::AreNotEqual(0, state.m_status.m_impactful);
-        }
-
-        TEST_METHOD(SpellChainsImpact) {
-            std::shared_ptr<Move_t> jolt2(new Jolt2_t());
-            std::shared_ptr<Move_t> imp(new Impact_t());
-            State_t state;
-
-            Assert::IsFalse(imp->IsUseable(state));
-            jolt2->Execute(state);
-            Assert::IsTrue(imp->IsUseable(state));
-            imp->Execute(state);
-            Assert::IsFalse(imp->IsUseable(state));
+            Assert::AreEqual(280, move->CalculatePotency(state));
         }
 
         TEST_METHOD(SpellChainsVerfire) {
@@ -83,13 +67,17 @@ namespace RDMModelTestCases
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Impact_t()), true);
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Verthunder_t()), true);
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Veraero_t()), true);
+			breaksMeleeHelper(std::shared_ptr<Move_t>(new Verthunder2_t()), true);
+			breaksMeleeHelper(std::shared_ptr<Move_t>(new Veraero2_t()), true);
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Verfire_t()), true);
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Verstone_t()), true);
-            breaksMeleeHelper(std::shared_ptr<Move_t>(new Scatter_t()), true);
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Manification_t()), true);
+			breaksMeleeHelper(std::shared_ptr<Move_t>(new EnhReprise_t()), true);
+
 
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Corps_t()), false);
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Displacement_t()), false);
+			breaksMeleeHelper(std::shared_ptr<Move_t>(new Engagement_t()), false);
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Acceleration_t()), false);
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Embolden_t()), false);
             breaksMeleeHelper(std::shared_ptr<Move_t>(new Swiftcast_t()), false);
@@ -106,6 +94,7 @@ namespace RDMModelTestCases
         std::shared_ptr<Move_t> zwer(new EnhZwerchhau_t());
         std::shared_ptr<Move_t> redoub(new EnhRedoublement_t());
         std::shared_ptr<Move_t> verflare(new Verflare_t());
+		std::shared_ptr<Move_t> scorch(new Scorch_t());
 
         std::shared_ptr<Move_t> fleche(new Fleche_t());
         std::shared_ptr<Move_t> corps(new Corps_t());
@@ -121,6 +110,7 @@ namespace RDMModelTestCases
         movestring.addMove(redoub);
         movestring.addMove(disp);
         movestring.addMove(verflare);
+		movestring.addMove(scorch);
         movestring.addMove(jolt2);
         movestring.addMove(end);
 
@@ -148,6 +138,7 @@ namespace RDMModelTestCases
             Assert::AreEqual(std::string("Re"), (*it++)->getChar());
             Assert::AreEqual(std::string("v"), (*it++)->getChar());
             Assert::AreEqual(std::string("B"), (*it++)->getChar());
+			Assert::AreEqual(std::string("S"), (*it++)->getChar());
             Assert::AreEqual(std::string("J"), (*it++)->getChar());
             Assert::AreEqual(std::string("END"), (*it++)->getChar());
         }
@@ -169,20 +160,17 @@ namespace RDMModelTestCases
             MoveStates_t opener_ms(opener_state);
 
             std::shared_ptr<Move_t> accel(new Acceleration_t());
-            std::shared_ptr<Move_t> div(new DiversionPlaceholder_t());
             std::shared_ptr<Move_t> veraero(new Veraero_t());
             std::shared_ptr<Move_t> verthunder(new Verthunder_t());
             std::shared_ptr<Move_t> end(new EndPlaceholder_t());
 
             opener_ms.advanceAndAddMove(accel);
-            opener_ms.advance(3900);
-            opener_ms.advanceAndAddMove(div);
-            opener_ms.advance((-5000 * opener_state.m_statics.m_gcd / 25000 * 10) - (-6000)); // butt it right up against start time
+            opener_ms.advance((-5000 * opener_state.m_statics.m_gcd / 25000 * 10) - (-14900)); // butt it right up against start time
             opener_ms.advanceAndAddMove(veraero);
 
-            Assert::AreEqual(9900, opener_ms.constLastState().m_total_duration + veraero->getCast() * opener_state.m_statics.m_gcd / 25000 * 10);
+            Assert::AreEqual(14900, opener_ms.constLastState().m_total_duration + veraero->getCast() * opener_state.m_statics.m_gcd / 25000 * 10);
 
-            MoveStates_t movestates(opener_ms, -9900);
+            MoveStates_t movestates(opener_ms, -14900);
             movestates.advance(movestates.constLastState().m_caststate.m_casting);
 
             Assert::AreEqual(0, movestates.constLastState().m_total_duration);
@@ -193,17 +181,16 @@ namespace RDMModelTestCases
             movestates.advanceAndAddMove(end);
 
             Assert::AreEqual(opener_state.m_statics.m_gcd, movestates.constLastState().m_total_duration);
-            Assert::AreEqual(600, movestates.constLastState().m_total_potency);
+            Assert::AreEqual(740, movestates.constLastState().m_total_potency);
         }
 
-        TEST_METHOD(Raid5thGCDEmboldenOpener) {
+        TEST_METHOD(Raid3rdGCDEmboldenOpener) {
             State_t opener_state;
             opener_state.m_statics.m_gcd = 2420;
-            opener_state.m_caststate.m_clipping = -1400; // offset allegedly clipping in precast accel/div
+            opener_state.m_caststate.m_clipping = -700; // offset allegedly clipping in precast accel/div
             MoveStates_t opener_ms(opener_state);
 
             std::shared_ptr<Move_t> accel(new Acceleration_t());
-            std::shared_ptr<Move_t> div(new DiversionPlaceholder_t());
             std::shared_ptr<Move_t> veraero(new Veraero_t());
             std::shared_ptr<Move_t> verthunder(new Verthunder_t());
             std::shared_ptr<Move_t> infusion(new Infusion_t());
@@ -212,73 +199,67 @@ namespace RDMModelTestCases
             std::shared_ptr<Move_t> fleche(new Fleche_t());
             std::shared_ptr<Move_t> contre(new Contre_t());
             std::shared_ptr<Move_t> jolt2(new Jolt2_t());
-            std::shared_ptr<Move_t> impact(new Impact_t());
             std::shared_ptr<Move_t> swift(new Swiftcast_t());
             std::shared_ptr<Move_t> embolden(new Embolden_t());
             std::shared_ptr<Move_t> corps(new Corps_t());
             std::shared_ptr<Move_t> disp(new Displacement_t());
+			std::shared_ptr<Move_t> engage(new Engagement_t());
             std::shared_ptr<Move_t> mani(new Manification_t());
             std::shared_ptr<Move_t> rip(new EnhRiposte_t());
             std::shared_ptr<Move_t> zwer(new EnhZwerchhau_t());
             std::shared_ptr<Move_t> redoub(new EnhRedoublement_t());
             std::shared_ptr<Move_t> verflare(new Verflare_t());
+			std::shared_ptr<Move_t> scorch(new Scorch_t());
             std::shared_ptr<Move_t> end(new EndPlaceholder_t());
 
             //const State_t& laststateref = opener_ms.constLastState();
 
             opener_ms.advanceAndAddMove(accel);
-            opener_ms.advance(3900);
-            opener_ms.advanceAndAddMove(div);
-            opener_ms.advance((-5000 * opener_state.m_statics.m_gcd / 25000 * 10) - (-6000)); // butt it right up against start time
-            opener_ms.advanceAndAddMove(veraero); // 300 | 0
+            opener_ms.advance((-5000 * opener_state.m_statics.m_gcd / 25000 * 10) - (-14900)); // butt it right up against start time
+			//TODO: Need to fix ALL of these running potency/gcd comments
+            opener_ms.advanceAndAddMove(veraero); // 370 | 0
 
-            Assert::AreEqual(9900, opener_ms.constLastState().m_total_duration + veraero->getCast() * opener_state.m_statics.m_gcd / 25000 * 10);
+            Assert::AreEqual(14900, opener_ms.constLastState().m_total_duration + veraero->getCast() * opener_state.m_statics.m_gcd / 25000 * 10);
 
-            opener_ms.advanceAndAddMove(verthunder); // 300 | 2.42
+            opener_ms.advanceAndAddMove(verthunder); // 370 | 2.42
             opener_ms.advanceAndAddMove(infusion); //  | 2.42 no clip
-            opener_ms.advanceAndAddMove(verstone); // 284 | 4.84
-            opener_ms.advanceAndAddMove(veraero); // 316 | 7.26
-            opener_ms.advanceAndAddMove(fleche); // 442 | 7.26 no clip
-            opener_ms.advanceAndAddMove(contre); // 316 | 7.26 no clip
-            opener_ms.advanceAndAddMove(jolt2); // 253 | 9.68 
-            opener_ms.advanceAndAddMove(verthunder); // 316 | 12.10
-            opener_ms.advanceAndAddMove(swift); //  | 12.10 no clip
-            opener_ms.advanceAndAddMove(embolden); //  | 12.10 no clip | EMBOLDEN 5
-            opener_ms.advanceAndAddMove(verthunder); // 347 | 14.52
+            opener_ms.advanceAndAddMove(verstone); // 316 | 4.84
+            opener_ms.advanceAndAddMove(veraero); // 390 | 7.26
+            opener_ms.advanceAndAddMove(fleche); // 463 | 7.26 no clip
+			opener_ms.advanceAndAddMove(embolden); //  | 7.26 no clip | EMBOLDEN 5
+			opener_ms.advanceAndAddMove(verfire); // 347 | 9.68
+            opener_ms.advanceAndAddMove(verthunder); // 429 | 12.10
+			opener_ms.advanceAndAddMove(corps); // 137 | 12.10 no clip
+			opener_ms.advanceAndAddMove(contre); // 421 | 12.10 no clip
+			opener_ms.advanceAndAddMove(verstone); // 341 | 14.52 | EMBOLDEN 3
+            opener_ms.advanceAndAddMove(verthunder); // 413 | 16.94
 
             Assert::AreEqual(0, opener_ms.constLastState().m_caststate.m_clipping, L"already clipping!");
 
-            opener_ms.advanceAndAddMove(disp); // 137 | 14.52 no clip
-            opener_ms.advanceAndAddMove(corps); // 137 | 14.85 clipping!
-            opener_ms.advance(opener_ms.constLastState().m_caststate.m_animation_lock);
+            opener_ms.advanceAndAddMove(engage); // 158 | 16.94 no clip
+            opener_ms.advanceAndAddMove(mani); //  | 16.94 no clip
+            opener_ms.advanceAndAddMove(rip); // 234 | 18.44
+            opener_ms.advanceAndAddMove(corps); // 137 | 18.44 no clip
+            opener_ms.advanceAndAddMove(zwer); // 318 | 19.94
+            opener_ms.advanceAndAddMove(redoub); // 515 | 22.14 | EMBOLDEN 2
+            opener_ms.advanceAndAddMove(disp); // 210 | 22.14 no clip
+            opener_ms.advanceAndAddMove(verflare); // 658 | 24.56
+            opener_ms.advanceAndAddMove(scorch); // 752 | 26.98 | EMBOLDEN 1
+            opener_ms.advanceAndAddMove(verfire); // 316 | 29.40 | EMBOLDEN 0
+            opener_ms.advanceAndAddMove(veraero); // 390 | 31.82
+            opener_ms.advanceAndAddMove(fleche); // 463 | 31.82 no clip
 
-            Assert::AreEqual(330, opener_ms.constLastState().m_caststate.m_clipping, L"didn't clip!");
-
-            opener_ms.advanceAndAddMove(impact); // 307 | 17.27 | EMBOLDEN 4
-            opener_ms.advanceAndAddMove(veraero); // 341 | 19.69
-            opener_ms.advanceAndAddMove(div); // actually Manashift but w/e
-            opener_ms.advanceAndAddMove(mani); //  | 19.69 no clip
-            opener_ms.advanceAndAddMove(rip); // 234 | 21.19 | EMBOLDEN 3
-            opener_ms.advanceAndAddMove(corps); // 137 | 21.19 no clip
-            opener_ms.advanceAndAddMove(zwer); // 324 | 22.69
-            opener_ms.advanceAndAddMove(redoub); // 525 | 24.89
-            opener_ms.advanceAndAddMove(disp); // 137 | 24.89 no clip
-            opener_ms.advanceAndAddMove(verflare); // 603 | 27.31 | EMBOLDEN 2
-            opener_ms.advanceAndAddMove(accel); //  | 27.31 no clip
-            opener_ms.advanceAndAddMove(verfire); // 290 | 29.73 | EMBOLDEN 1
-            opener_ms.advanceAndAddMove(veraero); // 322 | 32.15
-            opener_ms.advanceAndAddMove(fleche); // 442 | 32.15 no clip
-            Assert::AreEqual(42050, opener_ms.constLastState().m_total_duration + opener_ms.constLastState().m_caststate.m_gcd, L"running duration is off");
+			Assert::AreEqual(0, opener_ms.constLastState().m_caststate.m_clipping, L"clipped somewhere!");
+			Assert::AreEqual(46720, opener_ms.constLastState().m_total_duration + opener_ms.constLastState().m_caststate.m_gcd, L"running duration is off");
             // infusion wears off AFTER fleche
-            // embolden wears off AFTER embolden
 
-            MoveStates_t movestates(opener_ms, -9900);
+            MoveStates_t movestates(opener_ms, -14900);
 
             movestates.advanceAndAddMove(end);
 
-            Assert::AreEqual(32150, movestates.constLastState().m_total_duration, L"total duration is off");
-            Assert::AreEqual(6810, movestates.constLastState().m_total_potency);
-            AssertIsEssentuallyEqual(6810.0 / 32150.0 * 1000.0, movestates.constLastState().getDPS().calc());
+            Assert::AreEqual(31820, movestates.constLastState().m_total_duration, L"total duration is off");
+            Assert::AreEqual(8142, movestates.constLastState().m_total_potency);
+            AssertIsEssentuallyEqual(8142.0 / 31.82, movestates.constLastState().getDPS().calc());
         }
 
         MoveStates_t createMovestatesMeleeFinisher() {
@@ -293,6 +274,7 @@ namespace RDMModelTestCases
             std::shared_ptr<Move_t> zwer(new EnhZwerchhau_t());
             std::shared_ptr<Move_t> redoub(new EnhRedoublement_t());
             std::shared_ptr<Move_t> verflare(new Verflare_t());
+			std::shared_ptr<Move_t> scorch(new Scorch_t());
 
             std::shared_ptr<Move_t> fleche(new Fleche_t());
             std::shared_ptr<Move_t> corps(new Corps_t());
@@ -311,6 +293,8 @@ namespace RDMModelTestCases
             movestates.advanceAndAddMove(disp);
 
             movestates.advanceAndAddMove(verflare);
+
+			movestates.advanceAndAddMove(scorch);
 
             movestates.advanceAndAddMove(jolt2);
 
@@ -346,6 +330,7 @@ namespace RDMModelTestCases
             Assert::AreEqual(std::string("Re"), it++->first->getChar());
             Assert::AreEqual(std::string("v"), it++->first->getChar());
             Assert::AreEqual(std::string("B"), it++->first->getChar());
+			Assert::AreEqual(std::string("S"), it++->first->getChar());
             Assert::AreEqual(std::string("J"), it++->first->getChar());
             Assert::AreEqual(std::string("END"), it++->first->getChar());
         }
@@ -361,17 +346,19 @@ namespace RDMModelTestCases
             Assert::AreEqual(pot, it++->second.m_total_potency);
             pot += 290; // Z
             Assert::AreEqual(pot, it++->second.m_total_potency);
-            pot += 420; // L
+            pot += 440; // L
             Assert::AreEqual(pot, it++->second.m_total_potency);
             pot += 470; // Re
             Assert::AreEqual(pot, it++->second.m_total_potency);
-            pot += 130; // v
+            pot += 200; // v
             Assert::AreEqual(pot, it++->second.m_total_potency);
-            pot += 550; // B
+            pot += 600; // B
             Assert::AreEqual(pot, it++->second.m_total_potency);
+			pot += 700; // S
+			Assert::AreEqual(pot, it++->second.m_total_potency);
             pot += 0; // J is still casting, no potency increase yet!
             Assert::AreEqual(pot, it++->second.m_total_potency);
-            pot += 240; // END
+            pot += 280; // END
             Assert::AreEqual(pot, it++->second.m_total_potency);
         }
 
@@ -394,8 +381,10 @@ namespace RDMModelTestCases
             Assert::AreEqual(duration, it++->second.m_total_duration);
             duration += 1500; // B, Re done
             Assert::AreEqual(duration, it++->second.m_total_duration);
-            duration += 2420; // J, B done
+            duration += 2420; // S, B done
             Assert::AreEqual(duration, it++->second.m_total_duration);
+			duration += 2420; // J, S done
+			Assert::AreEqual(duration, it++->second.m_total_duration);
             duration += 2420; // END
             Assert::AreEqual(duration, it++->second.m_total_duration);
         }
@@ -418,6 +407,7 @@ namespace RDMModelTestCases
             Assert::AreEqual(std::string("Re"), it++->first->getChar());
             Assert::AreEqual(std::string("v"), it++->first->getChar());
             Assert::AreEqual(std::string("B"), it++->first->getChar());
+			Assert::AreEqual(std::string("S"), it++->first->getChar());
             Assert::AreEqual(std::string("J"), it++->first->getChar());
             Assert::AreEqual(std::string("END"), it++->first->getChar());
         }
@@ -439,17 +429,19 @@ namespace RDMModelTestCases
             Assert::AreEqual(pot, it++->second.m_total_potency);
             pot += 290; // Z
             Assert::AreEqual(pot, it++->second.m_total_potency);
-            pot += 420; // L
+            pot += 440; // L
             Assert::AreEqual(pot, it++->second.m_total_potency);
             pot += 470; // Re
             Assert::AreEqual(pot, it++->second.m_total_potency);
-            pot += 130; // v
+            pot += 200; // v
             Assert::AreEqual(pot, it++->second.m_total_potency);
-            pot += 550; // B
+            pot += 600; // B
             Assert::AreEqual(pot, it++->second.m_total_potency);
+			pot += 700; // S
+			Assert::AreEqual(pot, it++->second.m_total_potency);
             pot += 0; // J is still casting, no potency increase yet!
             Assert::AreEqual(pot, it++->second.m_total_potency);
-            pot += 240; // END
+            pot += 280; // END
             Assert::AreEqual(pot, it++->second.m_total_potency);
         }
 
@@ -478,8 +470,10 @@ namespace RDMModelTestCases
             Assert::AreEqual(duration, it++->second.m_total_duration);
             duration += 1500; // B, Re done
             Assert::AreEqual(duration, it++->second.m_total_duration);
-            duration += 2420; // J, B done
+            duration += 2420; // S, B done
             Assert::AreEqual(duration, it++->second.m_total_duration);
+			duration += 2420; // J, S done
+			Assert::AreEqual(duration, it++->second.m_total_duration);
             duration += 2420; // END
             Assert::AreEqual(duration, it++->second.m_total_duration);
         }

@@ -58,6 +58,7 @@ State_t::Status_t::Status_t()
       m_verstone(0),
       m_verfire(0),
       m_acceleration(0),
+	  m_accel_stacks(0),
       m_embolden(0),
       m_swiftcast(0),
       m_infusion(0),
@@ -185,7 +186,7 @@ State_t::UseActionRval_t State_t::UseAction(std::shared_ptr<Move_t> move)
         //TODO: optimize with map<string, int&>
         if (movechar == "^")
             m_recast.m_corps = recast;
-        else if (movechar == "v")
+        else if ((movechar == "v") || (movechar == "x"))
             m_recast.m_displacement = recast;
         else if (movechar == "@")
             m_recast.m_acceleration = recast;
@@ -254,6 +255,10 @@ void State_t::AdvanceTimeByMilliseconds(int ms) {
         advanceHelper(m_status.m_embolden, -10);
         advanceHelper(m_status.m_swiftcast, -10);
         advanceHelper(m_status.m_infusion, -10);
+
+		// if Acceleration fell off, reduce its stacks to 0
+		if (m_status.m_acceleration == 0)
+			m_status.m_accel_stacks = 0;
 
         advanceHelper(m_recast.m_corps, -10);
         advanceHelper(m_recast.m_displacement, -10);

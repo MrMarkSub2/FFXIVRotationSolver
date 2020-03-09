@@ -28,7 +28,7 @@ namespace NEATUnitTests
 		TEST_METHOD(softmaxTest)
 		{
 			std::vector<double> v = { 1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0 };
-			v = NEAT::softmax(v);
+			NEAT::softmax(v);
 
 			// from WolframAlpha
 			double denom = 2 + 2 * exp(1) + 2 * pow(exp(1),2) + pow(exp(1),3);

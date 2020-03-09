@@ -50,15 +50,6 @@ public:
     virtual void Execute(State_t& state) const;
 };
 
-class RDM_MODEL_API Impact_t : public Move_t {
-public:
-    Impact_t();
-    virtual ~Impact_t() { }
-
-    virtual void Execute(State_t& state) const;
-    virtual bool IsUseable(const State_t& state) const;
-};
-
 class RDM_MODEL_API Verthunder_t : public Move_t {
 public:
     Verthunder_t();
@@ -113,6 +104,16 @@ public:
     virtual int CalculatePotency(const State_t& state) const;
 };
 
+class RDM_MODEL_API Scorch_t : public Move_t {
+public:
+	Scorch_t();
+	virtual ~Scorch_t() { }
+
+	virtual void Execute(State_t& state) const;
+	virtual bool IsUseable(const State_t& state) const;
+	virtual int CalculatePotency(const State_t& state) const;
+};
+
 class RDM_MODEL_API Corps_t : public Move_t {
 public:
     Corps_t();
@@ -130,6 +131,16 @@ public:
     virtual void Execute(State_t& state) const;
     virtual bool IsUseable(const State_t& state) const;
 };
+
+class RDM_MODEL_API Engagement_t : public Move_t {
+public:
+	Engagement_t();
+	virtual ~Engagement_t() { }
+
+	virtual void Execute(State_t& state) const;
+	virtual bool IsUseable(const State_t& state) const;
+};
+
 
 class RDM_MODEL_API Acceleration_t : public Move_t {
 public:
@@ -244,24 +255,31 @@ public:
     virtual int CalculatePotency(const State_t& state) const;
 };
 
-class RDM_MODEL_API Scatter_t : public Move_t {
+class RDM_MODEL_API Verthunder2_t : public Move_t {
 public:
-    Scatter_t();
-    virtual ~Scatter_t() { }
+	Verthunder2_t();
+	virtual ~Verthunder2_t() { }
 
-    virtual void Execute(State_t& state) const;
-    virtual bool IsUseable(const State_t& state) const;
-    virtual int CalculatePotency(const State_t& state) const;
+	virtual void Execute(State_t& state) const;
+	virtual int CalculatePotency(const State_t& state) const;
 };
 
-class RDM_MODEL_API EnhScatter_t : public Move_t {
+class RDM_MODEL_API Veraero2_t : public Move_t {
 public:
-    EnhScatter_t();
-    virtual ~EnhScatter_t() { }
+	Veraero2_t();
+	virtual ~Veraero2_t() { }
 
-    virtual void Execute(State_t& state) const;
-    virtual bool IsUseable(const State_t& state) const;
-    virtual int CalculatePotency(const State_t& state) const;
+	virtual void Execute(State_t& state) const;
+	virtual int CalculatePotency(const State_t& state) const;
+};
+
+class RDM_MODEL_API Impact_t : public Move_t {
+public:
+	Impact_t();
+	virtual ~Impact_t() { }
+
+	virtual void Execute(State_t& state) const;
+	virtual int CalculatePotency(const State_t& state) const;
 };
 
 class RDM_MODEL_API Moulinet_t : public Move_t {
@@ -284,6 +302,24 @@ public:
     virtual int CalculatePotency(const State_t& state) const;
 };
 
+class RDM_MODEL_API Reprise_t : public Move_t {
+public:
+	Reprise_t();
+	virtual ~Reprise_t() { }
+
+	virtual void Execute(State_t& state) const;
+	virtual bool IsUseable(const State_t& state) const;
+};
+
+class RDM_MODEL_API EnhReprise_t : public Move_t {
+public:
+	EnhReprise_t();
+	virtual ~EnhReprise_t() { }
+
+	virtual void Execute(State_t& state) const;
+	virtual bool IsUseable(const State_t& state) const;
+};
+
 class RDM_MODEL_API Infusion_t : public Move_t {
 public:
     Infusion_t();
@@ -297,12 +333,6 @@ class RDM_MODEL_API EndPlaceholder_t : public Move_t {
 public:
     EndPlaceholder_t();
     virtual ~EndPlaceholder_t() { }
-};
-
-class RDM_MODEL_API DiversionPlaceholder_t : public Move_t {
-public:
-    DiversionPlaceholder_t();
-    virtual ~DiversionPlaceholder_t() { }
 };
 
 class RDM_MODEL_API MoveString_t {
@@ -365,11 +395,10 @@ private:
     Impl* pimpl;
 };
 
-// accel, diversion, veraero. that's it.
+// accel, veraero. that's it.
 RDM_MODEL_API MoveStates_t getMinimalisticOpener();
 
-// best raid opener as long as you don't have SAM & NIN
-// manashifting the BRD variation
-// doesn't take advantage of RNG procs
-// http://ffxivrotations.com/10d9
-RDM_MODEL_API MoveStates_t getRaid5thGCDEmboldenOpener();
+// best raid opener as long as you don't have SAM
+// no RNG procs thanks to 3 stacks of accel
+// http://ffxivrotations.com/2g0e
+RDM_MODEL_API MoveStates_t getRaid3rdGCDEmboldenOpener();

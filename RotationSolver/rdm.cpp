@@ -45,16 +45,17 @@ enum RDM_INDEX {
 
 	RDM_OUTPUT_BEGIN,
 	RDM_OUTPUT_JOLT2 = RDM_OUTPUT_BEGIN,
-	RDM_OUTPUT_IMPACT,
 	RDM_OUTPUT_VERTHUNDER,
 	RDM_OUTPUT_VERAERO,
 	RDM_OUTPUT_VERFIRE,
 	RDM_OUTPUT_VERSTONE,
 	RDM_OUTPUT_VERFLARE,
 	RDM_OUTPUT_VERHOLY,
+	RDM_OUTPUT_SCORCH,
 
 	RDM_OUTPUT_CORPS,
 	RDM_OUTPUT_DISPLACEMENT,
+	RDM_OUTPUT_ENGAGEMENT,
 
 	RDM_OUTPUT_ACCEL,
 	RDM_OUTPUT_MANIFICATION,
@@ -71,11 +72,14 @@ enum RDM_INDEX {
 	RDM_OUTPUT_ENHZWER,
 	RDM_OUTPUT_REDOUBLEMENT,
 	RDM_OUTPUT_ENHREDOUBLEMENT,
-	RDM_OUTPUT_SCATTER,
-	RDM_OUTPUT_ENHSCATTER,
+	RDM_OUTPUT_VERTHUNDER2,
+	RDM_OUTPUT_VERAERO2,
+	RDM_OUTPUT_IMPACT,
 	RDM_OUTPUT_MOULINET,
 	RDM_OUTPUT_ENHMOULINET,
-	RDM_OUTPUT_END = RDM_OUTPUT_ENHMOULINET
+	RDM_OUTPUT_REPRISE,
+	RDM_OUTPUT_ENHREPRISE,
+	RDM_OUTPUT_END = RDM_OUTPUT_ENHREPRISE
 };
 
 struct RDMSolver_t::Impl {
@@ -130,16 +134,17 @@ void RDMSolver_t::Impl::initialize()
 	no_connect_genome.addNodeGene(NEAT::INPUT_NODE, "BIAS");
 
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Jolt 2");
-	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Impact");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Verthunder");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Veraero");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Verfire");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Verstone");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Verflare");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Verholy");
+	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Scorch");
 
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Corps-a-corps");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Displacement");
+	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Engagement");
 
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Acceleration");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Manification");
@@ -156,24 +161,28 @@ void RDMSolver_t::Impl::initialize()
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Enh Zwer");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Redoublement");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Enh Redoublement");
-	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Scatter");
-	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Enh Scatter");
+	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Verthunder II");
+	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Veraero II");
+	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Impact");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Moulinet");
 	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Enh Moulinet");
+	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Reprise");
+	no_connect_genome.addNodeGene(NEAT::OUTPUT_NODE, "Enh Reprise");
 
 	std::cout << "Node count: " << no_connect_genome.Whh().rowCount() << std::endl;
 
 	m_moves[RDM_OUTPUT_JOLT2] = std::shared_ptr<Move_t>(new Jolt2_t());
-	m_moves[RDM_OUTPUT_IMPACT] = std::shared_ptr<Move_t>(new Impact_t());
 	m_moves[RDM_OUTPUT_VERTHUNDER] = std::shared_ptr<Move_t>(new Verthunder_t());
 	m_moves[RDM_OUTPUT_VERAERO] = std::shared_ptr<Move_t>(new Veraero_t());
 	m_moves[RDM_OUTPUT_VERFIRE] = std::shared_ptr<Move_t>(new Verfire_t());
 	m_moves[RDM_OUTPUT_VERSTONE] = std::shared_ptr<Move_t>(new Verstone_t());
 	m_moves[RDM_OUTPUT_VERFLARE] = std::shared_ptr<Move_t>(new Verflare_t());
 	m_moves[RDM_OUTPUT_VERHOLY] = std::shared_ptr<Move_t>(new Verholy_t());
+	m_moves[RDM_OUTPUT_SCORCH] = std::shared_ptr<Move_t>(new Scorch_t());
 
 	m_moves[RDM_OUTPUT_CORPS] = std::shared_ptr<Move_t>(new Corps_t());
 	m_moves[RDM_OUTPUT_DISPLACEMENT] = std::shared_ptr<Move_t>(new Displacement_t());
+	m_moves[RDM_OUTPUT_ENGAGEMENT] = std::shared_ptr<Move_t>(new Engagement_t());
 
 	m_moves[RDM_OUTPUT_ACCEL] = std::shared_ptr<Move_t>(new Acceleration_t());
 	m_moves[RDM_OUTPUT_MANIFICATION] = std::shared_ptr<Move_t>(new Manification_t());
@@ -190,10 +199,13 @@ void RDMSolver_t::Impl::initialize()
 	m_moves[RDM_OUTPUT_ENHZWER] = std::shared_ptr<Move_t>(new EnhZwerchhau_t());
 	m_moves[RDM_OUTPUT_REDOUBLEMENT] = std::shared_ptr<Move_t>(new Redoublement_t());
 	m_moves[RDM_OUTPUT_ENHREDOUBLEMENT] = std::shared_ptr<Move_t>(new EnhRedoublement_t());
-	m_moves[RDM_OUTPUT_SCATTER] = std::shared_ptr<Move_t>(new Scatter_t());
-	m_moves[RDM_OUTPUT_ENHSCATTER] = std::shared_ptr<Move_t>(new EnhScatter_t());
+	m_moves[RDM_OUTPUT_VERTHUNDER2] = std::shared_ptr<Move_t>(new Verthunder2_t());
+	m_moves[RDM_OUTPUT_VERAERO2] = std::shared_ptr<Move_t>(new Veraero2_t());
+	m_moves[RDM_OUTPUT_IMPACT] = std::shared_ptr<Move_t>(new Impact_t());
 	m_moves[RDM_OUTPUT_MOULINET] = std::shared_ptr<Move_t>(new Moulinet_t());
 	m_moves[RDM_OUTPUT_ENHMOULINET] = std::shared_ptr<Move_t>(new EnhMoulinet_t());
+	m_moves[RDM_OUTPUT_REPRISE] = std::shared_ptr<Move_t>(new Reprise_t());
+	m_moves[RDM_OUTPUT_ENHREPRISE] = std::shared_ptr<Move_t>(new EnhReprise_t());
 
 	std::cout << "Movemap count: " << m_moves.size() << std::endl;
 
